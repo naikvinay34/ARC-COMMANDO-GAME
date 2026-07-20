@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Arc Commando — an Arc Testnet Platformer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#8fd3ff;
+    --sky-bottom:#c9ecff;
+    --ink:#12142b;
+    --panel:#1b1f3b;
+    --panel-edge:#0d0f22;
+    --gold:#ffd23f;
+    --gold-dark:#c98d00;
+    --teal:#2ec4a6;
+    --coral:#ff5470;
+    --violet:#7c3aed;
+    --paper:#f4f1ea;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    color:var(--paper);
+    overflow:hidden;
+    -webkit-user-select:none; user-select:none;
+  }
+  #stage{
+    position:relative;
+    width:100%;
+    max-width:960px;
+    margin:0 auto;
+    aspect-ratio:16/10;
+    background:linear-gradient(var(--sky-top),var(--sky-bottom));
+    border:4px solid var(--panel-edge);
+    border-radius:10px;
+    overflow:hidden;
+    box-shadow:0 12px 0 var(--panel-edge), 0 14px 24px rgba(0,0,0,.5);
+  }
+  canvas{ display:block; width:100%; height:100%; image-rendering:pixelated; }
+
+  .pixel-font{ font-family:'Press Start 2P',monospace; letter-spacing:0.5px; }
+
+  #hud{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 14px;
+    font-size:10px;
+    pointer-events:none;
+    text-shadow:2px 2px 0 rgba(0,0,0,.55);
+  }
+  #hud .row{ display:flex; align-items:center; gap:12px; }
+  #hud .coin-dot{ color:var(--gold); }
+  #hud .life-dot{ color:var(--coral); }
+  #hud .gun-dot{ color:#8fe9ff; }
+  #hud .best{ color:#c9cbe0; font-size:9px; }
+  #hud .best b{ color:var(--gold); }
+
+  .overlay{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(10,11,26,.72);
+    backdrop-filter:blur(1px);
+    overflow-y:auto;
+    padding:16px 0;
+  }
+  .hidden{ display:none !important; }
+
+  .card{
+    width:min(88%,440px);
+    background:var(--panel);
+    border:3px solid var(--panel-edge);
+    border-radius:12px;
+    padding:20px 18px;
+    text-align:center;
+    box-shadow:0 6px 0 var(--panel-edge);
+    margin:auto;
+  }
+  .card h1{ font-size:16px; margin:0 0 10px; color:var(--gold); }
+  .card h2{ font-size:12px; margin:0 0 14px; color:var(--paper); }
+  .card p{ font-size:11.5px; line-height:1.7; color:#c9cbe0; margin:8px 0 14px; }
+  .card .stat{ font-size:11px; color:var(--paper); margin:6px 0; }
+  .card .stat b{ color:var(--gold); }
+  .divider{ border-top:1px dashed #383c63; margin:16px 0; }
+
+  button.pixel-btn{
+    font-family:'Press Start 2P',monospace;
+    font-size:10px;
+    color:var(--ink);
+    background:var(--gold);
+    border:none;
+    border-bottom:4px solid var(--gold-dark);
+    border-radius:6px;
+    padding:12px 14px;
+    cursor:pointer;
+    width:100%;
+    margin-top:8px;
+    transition:transform .05s ease;
+  }
+  button.pixel-btn:active{ transform:translateY(3px); border-bottom-width:1px; }
+  button.pixel-btn.secondary{ background:var(--teal); border-bottom-color:#1c8f79; color:#04231c; }
+  button.pixel-btn.violet{ background:var(--violet); border-bottom-color:#4c1d95; color:#f4f1ea; }
+  button.pixel-btn.ghost{ background:#2b2f52; border-bottom-color:#181b32; color:var(--paper); }
+  button.pixel-btn:disabled{ background:#4a4e6b; border-bottom-color:#33364d; color:#9598b3; cursor:default; }
+  .btn-row{ display:flex; gap:8px; }
+  .btn-row button{ flex:1; }
+
+  .mint-status{ font-size:10px; margin-top:10px; min-height:14px; color:#9db4ff; word-break:break-all; }
+  .mint-status a{ color:var(--gold); }
+
+  .wallet-pill{
+    font-size:10px; background:#0d0f22; border:1px solid #383c63; border-radius:20px;
+    padding:6px 12px; display:inline-block; margin-bottom:12px; color:#9db4ff;
+  }
+
+  #start-hint{ font-size:9px; color:#c9cbe0; margin-top:14px; line-height:1.9;}
+
+  /* Touch controls */
+  #touch{
+    position:absolute; left:0; right:0; bottom:0;
+    display:flex; justify-content:space-between;
+    padding:14px; pointer-events:none;
+  }
+  #touch .pad{ display:flex; gap:10px; pointer-events:auto; }
+  #touch button{
+    width:54px; height:54px; border-radius:50%;
+    border:3px solid var(--panel-edge);
+    background:rgba(27,31,59,.55);
+    color:var(--paper); font-size:17px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  #touch button:active{ background:rgba(255,210,63,.6); }
+  #jumpBtn{ background:rgba(255,84,112,.55) !important; }
+  #shootBtn{ background:rgba(143,233,255,.45) !important; }
+
+  @media (hover:hover){ #touch{ display:none; } }
+
+  footer{
+    max-width:960px; margin:10px auto 0; text-align:center;
+    font-size:11px; color:#7d8099;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="game" width="960" height="600"></canvas>
+
+  <div id="hud" class="pixel-font">
+    <div class="row">
+      <span><span class="coin-dot">●</span> <span id="coinCount">0</span></span>
+      <span><span class="life-dot">♥</span> <span id="lifeCount">3</span></span>
+      <span><span class="gun-dot" id="gunIcon" style="display:none;">◆</span></span>
+    </div>
+    <div class="row">
+      <span class="best">BEST <b id="hudBest">–</b></span>
+      <span>SCORE <span id="scoreCount">0</span></span>
+    </div>
+  </div>
+
+  <!-- Start screen -->
+  <div id="startScreen" class="overlay">
+    <div class="card">
+      <h1 class="pixel-font">ARC COMMANDO</h1>
+      <h2 class="pixel-font">a wallet-linked Arc Testnet platformer</h2>
+
+      <div id="walletBlock">
+        <p style="margin-bottom:10px;">Connect any EVM wallet to save your run and see your all-time best score.</p>
+        <div class="btn-row">
+          <button class="pixel-btn ghost" id="connectInjectedBtn">🦊 Browser Wallet</button>
+          <button class="pixel-btn ghost" id="connectWCBtn">🔗 WalletConnect</button>
+        </div>
+        <div class="mint-status" id="walletStatus"></div>
+      </div>
+
+      <div id="walletConnectedBlock" class="hidden">
+        <div class="wallet-pill" id="walletAddrPill"></div>
+        <div class="stat">Your all-time best score: <b id="startBest">0</b></div>
+        <button class="pixel-btn ghost" id="disconnectBtn" style="margin-top:6px;">Disconnect</button>
+      </div>
+
+      <div class="divider"></div>
+      <p>Guide Commando across the pipeline: grab data-coins, stomp or shoot glitches, pick up the ◆ gun to fight back, grab ♥ for an extra life, and take down the armored bugs before they let you pass. Reach the beacon to finish the level.</p>
+      <button class="pixel-btn" id="startBtn">▶ START GAME</button>
+      <div id="start-hint">
+        Desktop: ← → move · ↑/Space jump · X shoot (once armed)<br/>
+        Mobile: on-screen pad, jump &amp; shoot buttons
+      </div>
+    </div>
+  </div>
+
+  <!-- Game over screen -->
+  <div id="overScreen" class="overlay hidden">
+    <div class="card">
+      <h1 class="pixel-font" style="color:var(--coral);">SIGNAL LOST</h1>
+      <p>Commando ran out of lives.</p>
+      <div class="stat">Run score: <b id="finalScore">0</b></div>
+      <div class="stat">All-time best: <b id="overBest">0</b></div>
+      <button class="pixel-btn violet" id="saveScoreOverBtn">💾 SAVE SCORE ON ARC TESTNET</button>
+      <div class="mint-status" id="saveStatusOver"></div>
+      <button class="pixel-btn" id="retryBtn">↻ TRY AGAIN</button>
+    </div>
+  </div>
+
+  <!-- Level complete / mint screen -->
+  <div id="winScreen" class="overlay hidden">
+    <div class="card">
+      <h1 class="pixel-font">LEVEL COMPLETE</h1>
+      <div class="stat">Coins collected: <b id="winCoins">0</b></div>
+      <div class="stat">Score: <b id="winScore">0</b></div>
+      <div class="stat">All-time best: <b id="winBest">0</b></div>
+
+      <button class="pixel-btn violet" id="saveScoreWinBtn">💾 SAVE SCORE ON ARC TESTNET</button>
+      <div class="mint-status" id="saveStatusWin"></div>
+
+      <button class="pixel-btn secondary" id="mintBtn" style="margin-top:14px;">⛓ MINT BADGE ON ARC TESTNET</button>
+      <div class="mint-status" id="mintStatus"></div>
+
+      <button class="pixel-btn" id="playAgainBtn" style="margin-top:14px;">↻ PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <div id="touch">
+    <div class="pad">
+      <button id="leftBtn">◀</button>
+      <button id="rightBtn">▶</button>
+    </div>
+    <div class="pad">
+      <button id="shootBtn">🔫</button>
+      <button id="jumpBtn">⤒</button>
+    </div>
+  </div>
+</div>
+
+<footer>Original characters &amp; art — not affiliated with Nintendo. Runs on Arc Testnet (chain 5042002).</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.15.0/ethers.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/index.umd.js"></script>
+<script src="config.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  // ---------------------------------------------------------------
+  // Level map. '#' ground, 'B' brick platform, 'C' coin, 'G' small
+  // glitch enemy, 'I' armored insect (takes 3 hits), 'U' gun pickup,
+  // 'L' extra-life pickup, 'P' player spawn, 'F' flag/beacon.
+  // Each char = one 32px tile. Rows: 15, top to bottom.
+  // ---------------------------------------------------------------
+  const MAP = [
+"..........................................................................................",
+"..........................................................................................",
+"..........................................................................................",
+"..........................C..........................C...................................",
+"........................BBBBB.....................BBBBBBB.......C........................",
+"..........................................C..........................C...................",
+"..C.......C..........G..........U....................G.............BBBBB.................",
+"BBBBB...BBBBB......BBBBBBBB...BBBBBB...........BBBB..........BBBBBB......................",
+"..........................................................................................",
+"P.....C........G......L....C..........G....I...C..........G......I......C......I.......F..",
+"##################...............#############.......########..............BBBBBBB######",
+"##################...XXXXXXXXXXXX#############.......########..............#############",
+"##################...XXXXXXXXXXXX#############.......########..............#############",
+"##################...XXXXXXXXXXXX#############.......########..............#############",
+"##################...XXXXXXXXXXXX#############.......########..............#############",
+  ];
+
+  const TILE = 32;
+  const ROWS = MAP.length;
+  const COLS = MAP[0].length;
+  const LEVEL_W = COLS * TILE;
+  const LEVEL_H = ROWS * TILE;
+  const GRAVITY = 1500;
+  const MOVE_SPEED = 220;
+  const JUMP_VEL = -620;
+  const BULLET_SPEED = 560;
+  const SHOOT_COOLDOWN = 0.32;
+
+  let solids = [];
+  let coins = [];
+  let enemies = [];
+  let powerups = [];
+  let flag = null;
+  let playerSpawn = {x:64,y:64};
+
+  function parseMap(){
+    solids = []; coins = []; enemies = []; powerups = [];
+    for(let r=0;r<ROWS;r++){
+      for(let c=0;c<COLS;c++){
+        const ch = MAP[r][c];
+        const x = c*TILE, y = r*TILE;
+        if(ch === '#' || ch === 'B'){
+          solids.push({x,y,w:TILE,h:TILE, brick: ch==='B'});
+        } else if(ch === 'C'){
+          coins.push({x:x+8,y:y+8,w:16,h:16,taken:false});
+        } else if(ch === 'G'){
+          enemies.push({type:'glitch', x,y:y-TILE,vx:60,startX:x,range:96,alive:true,hp:1,w:28,h:28});
+        } else if(ch === 'I'){
+          enemies.push({type:'insect', x,y:y-(TILE+8),vx:40,startX:x,range:70,alive:true,hp:3,w:42,h:38});
+        } else if(ch === 'U'){
+          powerups.push({x:x+4,y:y+4,w:24,h:24,type:'gun',taken:false});
+        } else if(ch === 'L'){
+          powerups.push({x:x+4,y:y+4,w:24,h:24,type:'life',taken:false});
+        } else if(ch === 'P'){
+          playerSpawn = {x, y:y-TILE};
+        } else if(ch === 'F'){
+          flag = {x, y:y-TILE*5, w:12, h:TILE*5};
+        }
+      }
+    }
+  }
+  parseMap();
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let camX = 0;
+
+  function freshPlayer(){
+    return { x:playerSpawn.x, y:playerSpawn.y, w:26, h:30, vx:0, vy:0, onGround:false, facing:1, invuln:0, hasGun:false, shootCd:0 };
+  }
+  let player = freshPlayer();
+  let bullets = [];
+
+  let coinsCollected = 0;
+  let score = 0;
+  let lives = 3;
+  let elapsed = 0;
+  let running = false;
+  let won = false;
+
+  const keys = { left:false, right:false, jump:false, shoot:false };
+  let shootLatch = false;
+
+  window.addEventListener('keydown', e => {
+    if(['ArrowLeft','a','A'].includes(e.key)) keys.left = true;
+    if(['ArrowRight','d','D'].includes(e.key)) keys.right = true;
+    if(['ArrowUp','w','W',' '].includes(e.key)){ keys.jump = true; e.preventDefault(); }
+    if(['x','X'].includes(e.key)) keys.shoot = true;
+  });
+  window.addEventListener('keyup', e => {
+    if(['ArrowLeft','a','A'].includes(e.key)) keys.left = false;
+    if(['ArrowRight','d','D'].includes(e.key)) keys.right = false;
+    if(['ArrowUp','w','W',' '].includes(e.key)) keys.jump = false;
+    if(['x','X'].includes(e.key)) keys.shoot = false;
+  });
+
+  function bindHold(el, onDown, onUp){
+    el.addEventListener('touchstart', e=>{ e.preventDefault(); onDown(); }, {passive:false});
+    el.addEventListener('touchend', e=>{ e.preventDefault(); onUp(); }, {passive:false});
+    el.addEventListener('mousedown', onDown);
+    el.addEventListener('mouseup', onUp);
+    el.addEventListener('mouseleave', onUp);
+  }
+  bindHold(document.getElementById('leftBtn'), ()=>keys.left=true, ()=>keys.left=false);
+  bindHold(document.getElementById('rightBtn'), ()=>keys.right=true, ()=>keys.right=false);
+  bindHold(document.getElementById('jumpBtn'), ()=>keys.jump=true, ()=>keys.jump=false);
+  bindHold(document.getElementById('shootBtn'), ()=>keys.shoot=true, ()=>keys.shoot=false);
+
+  function aabb(a,b){
+    return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y;
+  }
+
+  function resolveSolids(p){
+    p.onGround = false;
+    p.x += p.vx * dt;
+    for(const s of solids){
+      if(aabb(p,s)){
+        if(p.vx > 0) p.x = s.x - p.w;
+        else if(p.vx < 0) p.x = s.x + s.w;
+        p.vx = 0;
+      }
+    }
+    p.y += p.vy * dt;
+    for(const s of solids){
+      if(aabb(p,s)){
+        if(p.vy > 0){ p.y = s.y - p.h; p.vy = 0; p.onGround = true; }
+        else if(p.vy < 0){ p.y = s.y + s.h; p.vy = 0; }
+      }
+    }
+  }
+
+  let dt = 0, lastT = 0;
+
+  function killEnemy(en, bonus){
+    en.alive = false;
+    score += bonus;
+  }
+
+  function update(t){
+    if(!running){ lastT = t; requestAnimationFrame(update); return; }
+    dt = Math.min((t - lastT)/1000, 1/30) || 0;
+    lastT = t;
+    elapsed += dt;
+
+    player.vx = 0;
+    if(keys.left){ player.vx = -MOVE_SPEED; player.facing = -1; }
+    if(keys.right){ player.vx = MOVE_SPEED; player.facing = 1; }
+    if(keys.jump && player.onGround){ player.vy = JUMP_VEL; }
+
+    if(player.shootCd > 0) player.shootCd -= dt;
+    if(keys.shoot && player.hasGun && player.shootCd <= 0){
+      bullets.push({ x: player.x + player.w/2, y: player.y + 6, vx: BULLET_SPEED*player.facing, life: 1.1 });
+      player.shootCd = SHOOT_COOLDOWN;
+    }
+
+    player.vy += GRAVITY * dt;
+    resolveSolids(player);
+    if(player.invuln > 0) player.invuln -= dt;
+    if(player.y > LEVEL_H + 100) loseLife();
+
+    // coins
+    for(const c of coins){
+      if(!c.taken && aabb(player,c)){ c.taken = true; coinsCollected++; score += 50; }
+    }
+
+    // powerups
+    for(const pu of powerups){
+      if(!pu.taken && aabb(player,pu)){
+        pu.taken = true;
+        if(pu.type === 'gun'){ player.hasGun = true; }
+        else if(pu.type === 'life'){ lives = Math.min(lives+1, 9); }
+      }
+    }
+
+    // bullets
+    for(const b of bullets){
+      b.x += b.vx*dt;
+      b.life -= dt;
+    }
+    bullets = bullets.filter(b => b.life > 0);
+    for(const b of bullets){
+      for(const en of enemies){
+        if(!en.alive) continue;
+        const bb = {x:b.x-4,y:b.y-3,w:8,h:6};
+        if(aabb(bb,en)){
+          en.hp -= 1;
+          b.life = 0;
+          if(en.hp <= 0) killEnemy(en, en.type==='insect' ? 250 : 150);
+        }
+      }
+    }
+    bullets = bullets.filter(b => b.life > 0);
+
+    // enemies
+    for(const en of enemies){
+      if(!en.alive) continue;
+      en.x += en.vx * dt;
+      if(en.x < en.startX - en.range/2 || en.x > en.startX + en.range/2) en.vx *= -1;
+      if(aabb(player, en)){
+        const playerBottom = player.y + player.h;
+        const stomping = player.vy > 0 && (playerBottom - en.y) < 16;
+        if(stomping){
+          en.hp -= 1;
+          player.vy = JUMP_VEL*0.5;
+          if(en.hp <= 0) killEnemy(en, en.type==='insect' ? 250 : 100);
+        } else if(player.invuln <= 0){
+          loseLife();
+        }
+      }
+    }
+
+    if(flag && !won && player.x + player.w > flag.x){
+      completeLevel();
+    }
+
+    camX = Math.max(0, Math.min(player.x - 300, LEVEL_W - canvas.width));
+
+    updateHud();
+    render();
+    requestAnimationFrame(update);
+  }
+
+  function loseLife(){
+    if(player.invuln > 0) return;
+    lives--;
+    player.invuln = 1.5;
+    if(lives <= 0){
+      running = false;
+      showGameOver();
+      return;
+    }
+    player.x = playerSpawn.x; player.y = playerSpawn.y; player.vx=0; player.vy=0;
+  }
+
+  function completeLevel(){
+    won = true;
+    running = false;
+    document.getElementById('winCoins').textContent = coinsCollected;
+    document.getElementById('winScore').textContent = score;
+    document.getElementById('winBest').textContent = Math.max(bestScore, score);
+    document.getElementById('winScreen').classList.remove('hidden');
+    resetSaveButtons();
+  }
+
+  function showGameOver(){
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('overBest').textContent = Math.max(bestScore, score);
+    document.getElementById('overScreen').classList.remove('hidden');
+    resetSaveButtons();
+  }
+
+  function resetSaveButtons(){
+    for(const id of ['saveScoreWinBtn','saveScoreOverBtn']){
+      const b = document.getElementById(id);
+      b.disabled = false; b.textContent = '💾 SAVE SCORE ON ARC TESTNET';
+    }
+    document.getElementById('saveStatusWin').textContent = '';
+    document.getElementById('saveStatusOver').textContent = '';
+  }
+
+  function updateHud(){
+    document.getElementById('coinCount').textContent = coinsCollected;
+    document.getElementById('lifeCount').textContent = Math.max(lives,0);
+    document.getElementById('scoreCount').textContent = score;
+    document.getElementById('gunIcon').style.display = player.hasGun ? 'inline' : 'none';
+    document.getElementById('hudBest').textContent = walletAddress ? Math.max(bestScore, score) : '–';
+  }
+
+  // ---------------------------------------------------------------
+  // Rendering — everything hand-drawn with primitives, no image assets
+  // ---------------------------------------------------------------
+  function render(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    ctx.fillStyle = '#a9dfae';
+    for(let i=0;i<6;i++){
+      const hx = (i*300 - camX*0.3) % 1800 - 200;
+      ctx.beginPath(); ctx.ellipse(hx, 470, 160, 90, 0, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    for(let i=0;i<8;i++){
+      const cx = (i*260 - camX*0.5) % 2200 - 200;
+      const cy = 60 + (i%3)*30;
+      ctx.beginPath();
+      ctx.ellipse(cx,cy,34,16,0,0,Math.PI*2);
+      ctx.ellipse(cx+26,cy+6,24,13,0,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    ctx.save();
+    ctx.translate(-camX, 0);
+
+    for(const s of solids){
+      if(s.brick){
+        ctx.fillStyle = '#b5651d'; ctx.fillRect(s.x,s.y,s.w,s.h);
+        ctx.strokeStyle = '#7a3f10'; ctx.lineWidth = 2; ctx.strokeRect(s.x+1,s.y+1,s.w-2,s.h-2);
+      } else {
+        ctx.fillStyle = '#6a8f3f'; ctx.fillRect(s.x,s.y,s.w,6);
+        ctx.fillStyle = '#8c5a2f'; ctx.fillRect(s.x,s.y+6,s.w,s.h-6);
+      }
+    }
+
+    const bob = Math.sin(elapsed*6);
+    for(const c of coins){
+      if(c.taken) continue;
+      ctx.save();
+      ctx.translate(c.x+8, c.y+8+bob*2);
+      ctx.fillStyle = '#ffd23f';
+      ctx.beginPath(); ctx.ellipse(0,0, Math.abs(Math.sin(elapsed*3))*7+3, 8, 0,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#c98d00'; ctx.lineWidth=2; ctx.stroke();
+      ctx.restore();
+    }
+
+    for(const pu of powerups){
+      if(pu.taken) continue;
+      ctx.save();
+      ctx.translate(pu.x+12, pu.y+12+Math.sin(elapsed*4)*3);
+      if(pu.type === 'gun'){
+        ctx.fillStyle = '#8fe9ff';
+        ctx.beginPath(); ctx.moveTo(-10,4); ctx.lineTo(10,4); ctx.lineTo(6,-6); ctx.lineTo(-10,-6); ctx.fill();
+        ctx.fillStyle = '#0d0f22'; ctx.fillRect(-2,-10,4,6);
+      } else {
+        ctx.fillStyle = '#ff5470';
+        ctx.beginPath();
+        ctx.moveTo(0,8);
+        ctx.bezierCurveTo(-14,-2,-10,-14,0,-6);
+        ctx.bezierCurveTo(10,-14,14,-2,0,8);
+        ctx.fill();
+      }
+      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    for(const en of enemies){
+      if(!en.alive) continue;
+      ctx.save();
+      const squish = 1 + Math.sin(elapsed*8)*0.06;
+      if(en.type === 'insect'){
+        ctx.translate(en.x+21, en.y+22);
+        ctx.scale(1, squish);
+        ctx.fillStyle = '#c9382a';
+        ctx.beginPath(); ctx.ellipse(0,0,20,16,0,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#6b1710'; ctx.lineWidth=2; ctx.stroke();
+        // wings
+        ctx.fillStyle = 'rgba(255,255,255,.35)';
+        ctx.beginPath(); ctx.ellipse(-6,-14,10,6,-0.3,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(6,-14,10,6,0.3,0,Math.PI*2); ctx.fill();
+        // eyes
+        ctx.fillStyle = '#ffd23f';
+        ctx.beginPath(); ctx.arc(-8,-2,4,0,Math.PI*2); ctx.arc(8,-2,4,0,Math.PI*2); ctx.fill();
+        // hp pips
+        for(let i=0;i<en.hp;i++){
+          ctx.fillStyle = '#ffd23f';
+          ctx.fillRect(-15+i*8,-26,5,4);
+        }
+      } else {
+        ctx.translate(en.x+14, en.y+28);
+        ctx.scale(1, squish);
+        ctx.fillStyle = '#7c3aed';
+        ctx.beginPath(); ctx.ellipse(0,0,14,14,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(-8,-4,5,5); ctx.fillRect(3,-4,5,5);
+        ctx.fillStyle = '#1b1f3b';
+        ctx.fillRect(-6,-2,2,2); ctx.fillRect(5,-2,2,2);
+      }
+      ctx.restore();
+    }
+
+    ctx.fillStyle = '#8fe9ff';
+    for(const b of bullets){
+      ctx.beginPath(); ctx.ellipse(b.x,b.y,6,3,0,0,Math.PI*2); ctx.fill();
+    }
+
+    if(flag){
+      ctx.fillStyle = '#9aa5b1';
+      ctx.fillRect(flag.x+4, flag.y, 4, flag.h);
+      ctx.fillStyle = won ? '#ffd23f' : '#ff5470';
+      ctx.beginPath();
+      ctx.moveTo(flag.x+8, flag.y+10);
+      ctx.lineTo(flag.x+32, flag.y+18);
+      ctx.lineTo(flag.x+8, flag.y+26);
+      ctx.fill();
+    }
+
+    ctx.save();
+    const flicker = player.invuln > 0 && Math.floor(elapsed*20)%2===0;
+    if(!flicker){
+      ctx.translate(player.x+player.w/2, player.y+player.h/2);
+      ctx.scale(player.facing,1);
+      ctx.fillStyle = '#2ec4a6';
+      ctx.fillRect(-13,-15,26,26);
+      ctx.strokeStyle = '#166b5b'; ctx.lineWidth=2;
+      ctx.strokeRect(-13,-15,26,26);
+      ctx.fillStyle = '#0d0f22';
+      ctx.fillRect(-9,-9,18,8);
+      ctx.fillStyle = '#8fe9ff';
+      ctx.fillRect(0,-8,7,6);
+      ctx.strokeStyle = '#ff5470'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(0,-15); ctx.lineTo(0,-22); ctx.stroke();
+      ctx.fillStyle = '#ff5470';
+      ctx.beginPath(); ctx.arc(0,-23,3,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#166b5b';
+      const legOffset = player.onGround && Math.abs(player.vx) > 5 ? Math.sin(elapsed*18)*4 : 0;
+      ctx.fillRect(-10,11+legOffset,8,6);
+      ctx.fillRect(2,11-legOffset,8,6);
+      if(player.hasGun){
+        ctx.fillStyle = '#8fe9ff';
+        ctx.fillRect(10,-2,12,5);
+      }
+    }
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  // ---------------------------------------------------------------
+  // Screen flow
+  // ---------------------------------------------------------------
+  function resetGame(){
+    parseMap();
+    player = freshPlayer();
+    bullets = [];
+    coinsCollected = 0; score = 0; lives = 3; elapsed = 0; won = false;
+    document.getElementById('mintStatus').textContent = '';
+    document.getElementById('mintBtn').disabled = false;
+    document.getElementById('mintBtn').textContent = '⛓ MINT BADGE ON ARC TESTNET';
+    resetSaveButtons();
+  }
+
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    document.getElementById('startScreen').classList.add('hidden');
+    running = true;
+  });
+  document.getElementById('retryBtn').addEventListener('click', ()=>{
+    document.getElementById('overScreen').classList.add('hidden');
+    resetGame();
+    running = true;
+  });
+  document.getElementById('playAgainBtn').addEventListener('click', ()=>{
+    document.getElementById('winScreen').classList.add('hidden');
+    resetGame();
+    running = true;
+  });
+
+  requestAnimationFrame(update);
+  render();
+
+  // ---------------------------------------------------------------
+  // Wallet connection (injected + WalletConnect) and on-chain calls
+  // ---------------------------------------------------------------
+  const BADGE_ABI = [
+    "function mint() external returns (uint256)",
+    "function hasMinted(address) view returns (bool)",
+    "function badgeOf(address) view returns (uint256)"
+  ];
+  const SCOREBOARD_ABI = [
+    "function submitScore(uint256 score) external",
+    "function getHighScore(address) view returns (uint256)"
+  ];
+
+  let ethersProvider = null; // ethers.BrowserProvider
+  let rawProvider = null;    // window.ethereum OR walletconnect provider
+  let walletAddress = null;
+  let bestScore = 0;
+  let wcProvider = null;
+
+  const hexChainId = '0x' + ARC_TESTNET.chainId.toString(16);
+
+  async function ensureArcNetwork(provider){
+    try{
+      await provider.request({ method:'wallet_switchEthereumChain', params:[{chainId:hexChainId}] });
+    }catch(switchErr){
+      if(switchErr.code === 4902){
+        await provider.request({
+          method:'wallet_addEthereumChain',
+          params:[{
+            chainId:hexChainId,
+            chainName:ARC_TESTNET.chainName,
+            nativeCurrency:ARC_TESTNET.nativeCurrency,
+            rpcUrls:ARC_TESTNET.rpcUrls,
+            blockExplorerUrls:ARC_TESTNET.blockExplorerUrls
+          }]
+        });
+      } else {
+        throw switchErr;
+      }
+    }
+  }
+
+  function shortAddr(a){ return a.slice(0,6) + '…' + a.slice(-4); }
+
+  async function refreshBestScore(){
+    if(!walletAddress || !ethersProvider) return;
+    if(SCOREBOARD_ADDRESS === '0x0000000000000000000000000000000000000000') return;
+    try{
+      const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, ethersProvider);
+      const hs = await contract.getHighScore(walletAddress);
+      bestScore = Number(hs);
+    }catch(e){ console.warn('Could not read best score', e); }
+    document.getElementById('startBest').textContent = bestScore;
+    updateHud();
+  }
+
+  function onWalletConnected(address){
+    walletAddress = address;
+    document.getElementById('walletBlock').classList.add('hidden');
+    document.getElementById('walletConnectedBlock').classList.remove('hidden');
+    document.getElementById('walletAddrPill').textContent = '🟢 ' + shortAddr(address);
+    refreshBestScore();
+  }
+
+  function onWalletDisconnected(){
+    walletAddress = null;
+    bestScore = 0;
+    document.getElementById('walletBlock').classList.remove('hidden');
+    document.getElementById('walletConnectedBlock').classList.add('hidden');
+    updateHud();
+  }
+
+  document.getElementById('connectInjectedBtn').addEventListener('click', async ()=>{
+    const status = document.getElementById('walletStatus');
+    if(!window.ethereum){
+      status.textContent = 'No browser wallet found — install MetaMask, or use WalletConnect instead.';
+      return;
+    }
+    try{
+      status.textContent = 'Connecting…';
+      await window.ethereum.request({ method:'eth_requestAccounts' });
+      await ensureArcNetwork(window.ethereum);
+      rawProvider = window.ethereum;
+      ethersProvider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await ethersProvider.getSigner();
+      status.textContent = '';
+      onWalletConnected(await signer.getAddress());
+      window.ethereum.on && window.ethereum.on('accountsChanged', (accs)=>{
+        if(accs.length===0) onWalletDisconnected(); else onWalletConnected(accs[0]);
+      });
+    }catch(err){
+      console.error(err);
+      status.textContent = 'Connection failed: ' + (err.shortMessage || err.message);
+    }
+  });
+
+  document.getElementById('connectWCBtn').addEventListener('click', async ()=>{
+    const status = document.getElementById('walletStatus');
+    if(!window['@walletconnect/ethereum-provider']){
+      status.textContent = 'WalletConnect library failed to load — check your connection and retry.';
+      return;
+    }
+    if(!WALLETCONNECT_PROJECT_ID || WALLETCONNECT_PROJECT_ID === 'YOUR_WALLETCONNECT_PROJECT_ID'){
+      status.textContent = 'Set WALLETCONNECT_PROJECT_ID in config.js first (free at cloud.reown.com).';
+      return;
+    }
+    try{
+      status.textContent = 'Opening WalletConnect…';
+      const { EthereumProvider } = window['@walletconnect/ethereum-provider'];
+      wcProvider = await EthereumProvider.init({
+        projectId: WALLETCONNECT_PROJECT_ID,
+        chains: [ARC_TESTNET.chainId],
+        optionalChains: [ARC_TESTNET.chainId],
+        showQrModal: true,
+        rpcMap: { [ARC_TESTNET.chainId]: ARC_TESTNET.rpcUrls[0] },
+        metadata: {
+          name: "Arc Commando",
+          description: "A wallet-linked Arc Testnet platformer",
+          url: window.location.origin,
+          icons: []
+        }
+      });
+      await wcProvider.connect();
+      rawProvider = wcProvider;
+      ethersProvider = new ethers.BrowserProvider(wcProvider);
+      const accounts = await wcProvider.request({ method:'eth_accounts' });
+      status.textContent = '';
+      onWalletConnected(accounts[0]);
+      wcProvider.on('accountsChanged', (accs)=>{
+        if(accs.length===0) onWalletDisconnected(); else onWalletConnected(accs[0]);
+      });
+      wcProvider.on('disconnect', onWalletDisconnected);
+    }catch(err){
+      console.error(err);
+      status.textContent = 'WalletConnect failed: ' + (err.message || 'unknown error');
+    }
+  });
+
+  document.getElementById('disconnectBtn').addEventListener('click', async ()=>{
+    try{ if(wcProvider) await wcProvider.disconnect(); }catch(e){}
+    rawProvider = null; ethersProvider = null; wcProvider = null;
+    onWalletDisconnected();
+  });
+
+  // ---------------------------------------------------------------
+  // Save score on-chain (Win screen and Game Over screen share logic)
+  // ---------------------------------------------------------------
+  async function saveScore(btnId, statusId){
+    const btn = document.getElementById(btnId);
+    const status = document.getElementById(statusId);
+    if(!walletAddress || !ethersProvider){
+      status.textContent = 'Connect a wallet from the start screen first, then play again.';
+      return;
+    }
+    if(SCOREBOARD_ADDRESS === '0x0000000000000000000000000000000000000000'){
+      status.textContent = 'Scoreboard contract not deployed yet — see README.md, then set SCOREBOARD_ADDRESS in config.js.';
+      return;
+    }
+    btn.disabled = true;
+    try{
+      await ensureArcNetwork(rawProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
+      status.textContent = 'Confirm the transaction in your wallet…';
+      const tx = await contract.submitScore(score);
+      status.textContent = 'Waiting for Arc Testnet confirmation…';
+      const receipt = await tx.wait();
+      await refreshBestScore();
+      const explorerUrl = `${ARC_TESTNET.blockExplorerUrls[0]}/tx/${receipt.hash}`;
+      const isRecord = score >= bestScore;
+      status.innerHTML = (isRecord ? '🏆 New all-time best! ' : 'Saved. ') + `<a href="${explorerUrl}" target="_blank" rel="noopener">View on ArcScan ↗</a>`;
+      btn.textContent = '✔ SCORE SAVED';
+    }catch(err){
+      console.error(err);
+      status.textContent = 'Save failed: ' + (err.shortMessage || err.message || 'unknown error');
+      btn.disabled = false;
+    }
+  }
+  document.getElementById('saveScoreWinBtn').addEventListener('click', ()=>saveScore('saveScoreWinBtn','saveStatusWin'));
+  document.getElementById('saveScoreOverBtn').addEventListener('click', ()=>saveScore('saveScoreOverBtn','saveStatusOver'));
+
+  // ---------------------------------------------------------------
+  // Mint completion badge (unchanged flow, injected or WC signer)
+  // ---------------------------------------------------------------
+  const mintBtn = document.getElementById('mintBtn');
+  const mintStatus = document.getElementById('mintStatus');
+
+  mintBtn.addEventListener('click', async ()=>{
+    mintStatus.innerHTML = '';
+    if(!walletAddress || !ethersProvider){
+      mintStatus.textContent = 'Connect a wallet from the start screen first, then play again.';
+      return;
+    }
+    if(CONTRACT_ADDRESS === '0x0000000000000000000000000000000000000000'){
+      mintStatus.textContent = 'Badge contract not deployed yet — see README.md, then set CONTRACT_ADDRESS in config.js.';
+      return;
+    }
+    mintBtn.disabled = true;
+    try{
+      await ensureArcNetwork(rawProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new ethers.Contract(CONTRACT_ADDRESS, BADGE_ABI, signer);
+
+      const already = await contract.hasMinted(walletAddress);
+      if(already){
+        const id = await contract.badgeOf(walletAddress);
+        mintStatus.innerHTML = `Badge already minted — token #${id.toString()}.`;
+        mintBtn.textContent = '✔ BADGE MINTED';
+        return;
+      }
+
+      mintStatus.textContent = 'Confirm the transaction in your wallet…';
+      const tx = await contract.mint();
+      mintStatus.textContent = 'Waiting for Arc Testnet confirmation…';
+      const receipt = await tx.wait();
+
+      const explorerUrl = `${ARC_TESTNET.blockExplorerUrls[0]}/tx/${receipt.hash}`;
+      mintStatus.innerHTML = `Minted! <a href="${explorerUrl}" target="_blank" rel="noopener">View on ArcScan ↗</a>`;
+      mintBtn.textContent = '✔ BADGE MINTED';
+    }catch(err){
+      console.error(err);
+      mintStatus.textContent = 'Mint failed: ' + (err.shortMessage || err.message || 'unknown error');
+      mintBtn.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>
