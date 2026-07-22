@@ -29,17 +29,36 @@
     overflow:hidden;
     -webkit-user-select:none; user-select:none;
   }
+  body{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:100vh;
+    padding:
+      max(8px, env(safe-area-inset-top))
+      max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom))
+      max(8px, env(safe-area-inset-left));
+  }
+  @supports (height: 100svh){
+    body{ min-height:100svh; }
+  }
+  #stage-wrap{
+    display:flex; flex-direction:column; align-items:center;
+    width:100%; max-width:960px;
+  }
   #stage{
     position:relative;
-    width:100%;
-    max-width:960px;
-    margin:0 auto;
+    container-type:inline-size;
+    container-name:stagebox;
+    width:min(960px, 96vw);
     aspect-ratio:16/10;
     background:linear-gradient(var(--sky-top),var(--sky-bottom));
     border:4px solid var(--panel-edge);
     border-radius:10px;
     overflow:hidden;
     box-shadow:0 12px 0 var(--panel-edge), 0 14px 24px rgba(0,0,0,.5);
+  }
+  @supports (height: 100svh){
+    #stage{ width:min(960px, 96vw, calc((100svh - 64px) * 1.6)); }
   }
   canvas{ display:block; width:100%; height:100%; image-rendering:pixelated; }
 
@@ -48,20 +67,20 @@
   #hud{
     position:absolute; top:0; left:0; right:0;
     display:flex; justify-content:space-between; align-items:center;
-    padding:10px 14px;
-    font-size:10px;
+    padding:clamp(6px,2.2cqw,10px) clamp(8px,2.8cqw,14px);
+    font-size:clamp(8px,2.1cqw,10px);
     text-shadow:2px 2px 0 rgba(0,0,0,.55);
   }
-  #hud .row{ display:flex; align-items:center; gap:12px; pointer-events:none; }
+  #hud .row{ display:flex; align-items:center; gap:clamp(6px,2cqw,12px); pointer-events:none; flex-wrap:wrap; }
   #hud .coin-dot{ color:var(--gold); }
   #hud .life-dot{ color:var(--coral); }
   #hud .gun-dot{ color:#8fe9ff; }
-  #hud .best{ color:#c9cbe0; font-size:9px; }
+  #hud .best{ color:#c9cbe0; font-size:clamp(7px,1.9cqw,9px); }
   #hud .best b{ color:var(--gold); }
   #soundBtn{
     pointer-events:auto; cursor:pointer; background:rgba(13,15,34,.55);
     border:1px solid #383c63; border-radius:6px; color:var(--paper);
-    font-size:13px; padding:4px 7px;
+    font-size:clamp(11px,3cqw,13px); padding:clamp(3px,1cqw,4px) clamp(5px,1.6cqw,7px);
   }
 
   .overlay{
@@ -70,37 +89,37 @@
     background:rgba(10,11,26,.72);
     backdrop-filter:blur(1px);
     overflow-y:auto;
-    padding:16px 0;
+    padding:clamp(8px,3cqw,16px) 0;
     z-index:5;
   }
   .hidden{ display:none !important; }
 
   .card{
-    width:min(88%,440px);
+    width:min(90%,440px);
     background:var(--panel);
     border:3px solid var(--panel-edge);
     border-radius:12px;
-    padding:20px 18px;
+    padding:clamp(12px,4.5cqw,20px) clamp(10px,4cqw,18px);
     text-align:center;
     box-shadow:0 6px 0 var(--panel-edge);
     margin:auto;
   }
-  .card h1{ font-size:16px; margin:0 0 10px; color:var(--gold); }
-  .card h2{ font-size:12px; margin:0 0 14px; color:var(--paper); }
-  .card p{ font-size:11.5px; line-height:1.7; color:#c9cbe0; margin:8px 0 14px; }
-  .card .stat{ font-size:11px; color:var(--paper); margin:6px 0; }
+  .card h1{ font-size:clamp(12px,4.2cqw,16px); margin:0 0 10px; color:var(--gold); }
+  .card h2{ font-size:clamp(9px,3.2cqw,12px); margin:0 0 14px; color:var(--paper); }
+  .card p{ font-size:clamp(10px,3cqw,11.5px); line-height:1.7; color:#c9cbe0; margin:8px 0 14px; }
+  .card .stat{ font-size:clamp(9px,2.9cqw,11px); color:var(--paper); margin:6px 0; }
   .card .stat b{ color:var(--gold); }
   .divider{ border-top:1px dashed #383c63; margin:16px 0; }
 
   button.pixel-btn{
     font-family:'Press Start 2P',monospace;
-    font-size:10px;
+    font-size:clamp(8px,2.6cqw,10px);
     color:var(--ink);
     background:var(--gold);
     border:none;
     border-bottom:4px solid var(--gold-dark);
     border-radius:6px;
-    padding:12px 14px;
+    padding:clamp(9px,3cqw,12px) clamp(8px,2.8cqw,14px);
     cursor:pointer;
     width:100%;
     margin-top:8px;
@@ -115,24 +134,24 @@
   .btn-row{ display:flex; gap:8px; }
   .btn-row button{ flex:1; }
 
-  .mint-status{ font-size:10px; margin-top:10px; min-height:14px; color:#9db4ff; word-break:break-all; }
+  .mint-status{ font-size:clamp(8px,2.5cqw,10px); margin-top:10px; min-height:14px; color:#9db4ff; word-break:break-all; }
   .mint-status a{ color:var(--gold); }
 
   .wallet-pill{
-    font-size:10px; background:#0d0f22; border:1px solid #383c63; border-radius:20px;
+    font-size:clamp(8px,2.5cqw,10px); background:#0d0f22; border:1px solid #383c63; border-radius:20px;
     padding:6px 12px; display:inline-block; margin-bottom:10px; color:#9db4ff;
   }
   .balance-pill{
-    font-size:9px; background:#0d0f22; border:1px solid #383c63; border-radius:20px;
+    font-size:clamp(7px,2.2cqw,9px); background:#0d0f22; border:1px solid #383c63; border-radius:20px;
     padding:5px 10px; display:inline-block; margin-bottom:10px; margin-left:6px; color:#ffd23f;
   }
 
-  #start-hint{ font-size:9px; color:#c9cbe0; margin-top:14px; line-height:1.9;}
+  #start-hint{ font-size:clamp(7px,2.2cqw,9px); color:#c9cbe0; margin-top:14px; line-height:1.9;}
 
   #chainOverlay{
     z-index:20; background:rgba(10,11,26,.88);
   }
-  #chainOverlay .card{ width:min(80%,340px); }
+  #chainOverlay .card{ width:min(85%,340px); }
   .spinner{
     width:26px; height:26px; margin:4px auto 14px;
     border:4px solid #383c63; border-top-color:var(--gold);
@@ -140,34 +159,37 @@
   }
   @keyframes spin{ to{ transform:rotate(360deg); } }
 
-  /* Touch controls */
+  /* Touch controls — sized relative to the stage so they work from a
+     small phone up to a tablet without ever crowding the play area */
   #touch{
     position:absolute; left:0; right:0; bottom:0;
     display:flex; justify-content:space-between;
-    padding:14px; pointer-events:none;
+    padding:clamp(8px,3cqw,14px); pointer-events:none;
   }
-  #touch .pad{ display:flex; gap:10px; pointer-events:auto; }
+  #touch .pad{ display:flex; gap:clamp(6px,2.5cqw,10px); pointer-events:auto; }
   #touch button{
-    width:54px; height:54px; border-radius:50%;
+    width:clamp(42px,13cqw,56px); height:clamp(42px,13cqw,56px); border-radius:50%;
     border:3px solid var(--panel-edge);
     background:rgba(27,31,59,.55);
-    color:var(--paper); font-size:17px;
+    color:var(--paper); font-size:clamp(13px,4cqw,17px);
     display:flex; align-items:center; justify-content:center;
   }
   #touch button:active{ background:rgba(255,210,63,.6); }
   #jumpBtn{ background:rgba(255,84,112,.55) !important; }
   #shootBtn{ background:rgba(143,233,255,.45) !important; }
 
-  @media (hover:hover){ #touch{ display:none; } }
+  @media (hover:hover) and (pointer:fine){ #touch{ display:none; } }
 
   footer{
-    max-width:960px; margin:10px auto 0; text-align:center;
-    font-size:11px; color:#7d8099;
+    max-width:960px; width:100%; margin:8px auto 0; text-align:center;
+    font-size:clamp(8px,2.4vw,11px); color:#7d8099; padding:0 8px;
   }
+  @media (max-height:560px){ footer{ display:none; } }
 </style>
 </head>
 <body>
 
+<div id="stage-wrap">
 <div id="stage">
   <canvas id="game" width="960" height="600"></canvas>
 
@@ -190,12 +212,12 @@
       <h1 class="pixel-font">ARC COMMANDO</h1>
       <h2 class="pixel-font">a wallet-linked Arc Testnet platformer</h2>
 
+      <div id="configWarning" class="mint-status hidden" style="color:#ff9b6a; margin-bottom:10px;"></div>
+
       <div id="walletBlock">
-        <p style="margin-bottom:10px;">Connect a wallet to play. Starting a run and every life you lose each sign a small transaction on <b>Arc Testnet</b>.</p>
-        <div class="btn-row">
-          <button class="pixel-btn ghost" id="connectInjectedBtn">🦊 Browser Wallet</button>
-          <button class="pixel-btn ghost" id="connectWCBtn">🔗 WalletConnect</button>
-        </div>
+        <p style="margin-bottom:10px;">Connect a wallet to play. Connecting, starting a run, and every life you lose each sign a small transaction on <b>Arc Testnet</b>.</p>
+        <div id="walletList" class="btn-row" style="flex-direction:column;"></div>
+        <button class="pixel-btn ghost" id="connectWCBtn" style="margin-top:6px;">🔗 WalletConnect (any mobile wallet)</button>
         <div class="mint-status" id="walletStatus"></div>
       </div>
 
@@ -272,6 +294,7 @@
 </div>
 
 <footer>Original characters &amp; art — not affiliated with Nintendo. Runs on Arc Testnet (chain 5042002). Music/SFX are synthesized in-browser, no external audio files.</footer>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.15.0/ethers.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/index.umd.js"></script>
@@ -462,19 +485,43 @@
     txFail: ()=> tone(150,0.3,'sawtooth',0.15),
   };
 
+  // Original bouncy chiptune loop — NOT the Super Mario theme (that
+  // melody is copyrighted). Bass + skipping lead + hi-hat ticks over
+  // a 16-step bar, written from scratch for this game.
   let musicTimer = null, musicStep = 0;
-  const musicPattern = [196,196,247,196,220,196,247,294,196,196,247,262,220,196,175,196];
+  const MUSIC_BASS = [196,196,0,196, 220,220,0,220, 247,247,0,247, 262,220,196,0];
+  const MUSIC_LEAD = [0,392,494,523, 0,440,523,587, 0,494,587,622, 659,587,523,494];
+
+  function noiseHat(vol, when){
+    if(!soundOn) return;
+    try{
+      const c = actx();
+      const size = Math.floor(c.sampleRate*0.03);
+      const buf = c.createBuffer(1, size, c.sampleRate);
+      const data = buf.getChannelData(0);
+      for(let i=0;i<size;i++) data[i] = (Math.random()*2-1) * (1 - i/size);
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      const g = c.createGain();
+      g.gain.value = vol;
+      src.connect(g); g.connect(c.destination);
+      src.start(c.currentTime + (when||0));
+    }catch(e){ /* ignore */ }
+  }
+
   function startMusic(){
     if(musicTimer) return;
     musicStep = 0;
     musicTimer = setInterval(()=>{
       if(soundOn){
-        const f = musicPattern[musicStep % musicPattern.length];
-        tone(f, 0.2, 'triangle', 0.045);
-        if(musicStep % 4 === 0) tone(f*2, 0.08, 'square', 0.025, 0.02);
+        const bassNote = MUSIC_BASS[musicStep % MUSIC_BASS.length];
+        const leadNote = MUSIC_LEAD[musicStep % MUSIC_LEAD.length];
+        if(bassNote) tone(bassNote, 0.16, 'triangle', 0.055);
+        if(leadNote) tone(leadNote, 0.14, 'square', 0.05, 0.01);
+        if(musicStep % 2 === 0) noiseHat(0.025, 0);
       }
       musicStep++;
-    }, 240);
+    }, 150);
   }
   function stopMusic(){ clearInterval(musicTimer); musicTimer = null; }
 
@@ -903,30 +950,116 @@
     updateHud();
   }
 
-  document.getElementById('connectInjectedBtn').addEventListener('click', async ()=>{
+  // ---------------------------------------------------------------
+  // Config sanity check — makes missing contract addresses loud
+  // instead of silently skipping transactions.
+  // ---------------------------------------------------------------
+  function checkConfigWarning(){
+    const missing = [];
+    if(SCOREBOARD_ADDRESS === ZERO_ADDR) missing.push('SCOREBOARD_ADDRESS (connect/start/loss/save-score transactions)');
+    if(CONTRACT_ADDRESS === ZERO_ADDR) missing.push('CONTRACT_ADDRESS (badge mint)');
+    const el = document.getElementById('configWarning');
+    if(missing.length){
+      el.textContent = '⚠ Not deployed yet, so no on-chain transactions will fire: ' + missing.join('; ') + '. See README.md.';
+      el.classList.remove('hidden');
+    } else {
+      el.classList.add('hidden');
+    }
+  }
+  checkConfigWarning();
+
+  // ---------------------------------------------------------------
+  // EIP-6963 multi-wallet discovery — lists every extension-based EVM
+  // wallet installed in the browser (MetaMask, Rabby, Coinbase Wallet,
+  // Brave Wallet, etc.) instead of guessing at a single window.ethereum.
+  // ---------------------------------------------------------------
+  const discoveredWallets = []; // { info:{uuid,name,icon,rdns}, provider }
+
+  window.addEventListener('eip6963:announceProvider', (event) => {
+    const { info, provider } = event.detail;
+    if(!discoveredWallets.find(w => w.info.uuid === info.uuid)){
+      discoveredWallets.push({ info, provider });
+      renderWalletList();
+    }
+  });
+  window.dispatchEvent(new Event('eip6963:requestProvider'));
+
+  function renderWalletList(){
+    const list = document.getElementById('walletList');
+    list.innerHTML = '';
+    for(const w of discoveredWallets){
+      const btn = document.createElement('button');
+      btn.className = 'pixel-btn ghost';
+      btn.style.display = 'flex'; btn.style.alignItems = 'center'; btn.style.justifyContent = 'center'; btn.style.gap = '8px';
+      btn.innerHTML = `<img src="${w.info.icon}" width="16" height="16" style="border-radius:3px;" alt=""/> ${w.info.name}`;
+      btn.addEventListener('click', () => connectWithProvider(w.provider, w.info.name));
+      list.appendChild(btn);
+    }
+    // Legacy fallback: a wallet injected window.ethereum but doesn't
+    // support EIP-6963 announcement.
+    if(discoveredWallets.length === 0 && window.ethereum){
+      const btn = document.createElement('button');
+      btn.className = 'pixel-btn ghost';
+      btn.textContent = '🦊 Browser Wallet';
+      btn.addEventListener('click', () => connectWithProvider(window.ethereum, 'Browser Wallet'));
+      list.appendChild(btn);
+    }
+    if(discoveredWallets.length === 0 && !window.ethereum){
+      const note = document.createElement('div');
+      note.className = 'mint-status';
+      note.textContent = 'No browser wallet extension detected — install one, or use WalletConnect below.';
+      list.appendChild(note);
+    }
+  }
+  // Extensions can announce slightly after page load; give it a beat.
+  setTimeout(renderWalletList, 300);
+
+  // ---------------------------------------------------------------
+  // Shared connect flow for any EIP-1193 provider (injected wallets
+  // and WalletConnect both land here). Ends with an on-chain
+  // connectWallet() receipt — a real signed transaction, gas only,
+  // no fee collected.
+  // ---------------------------------------------------------------
+  async function connectWithProvider(provider, label){
     actx(); // unlock audio on this user gesture
     const status = document.getElementById('walletStatus');
-    if(!window.ethereum){
-      status.textContent = 'No browser wallet found — install MetaMask, or use WalletConnect instead.';
-      return;
-    }
     try{
-      status.textContent = 'Connecting…';
-      await window.ethereum.request({ method:'eth_requestAccounts' });
-      await ensureArcNetwork(window.ethereum);
-      rawProvider = window.ethereum;
-      ethersProvider = new ethers.BrowserProvider(window.ethereum);
+      status.textContent = `Connecting to ${label}…`;
+      await provider.request({ method:'eth_requestAccounts' });
+      await ensureArcNetwork(provider);
+      rawProvider = provider;
+      ethersProvider = new ethers.BrowserProvider(provider);
       const signer = await ethersProvider.getSigner();
+      const address = await signer.getAddress();
       status.textContent = '';
-      onWalletConnected(await signer.getAddress());
-      window.ethereum.on && window.ethereum.on('accountsChanged', (accs)=>{
+
+      if(SCOREBOARD_ADDRESS !== ZERO_ADDR){
+        showChainOverlay('Confirm wallet connection…', `Signing a connect receipt on Arc Testnet as ${label}.`);
+        try{
+          const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
+          sfx.txGo();
+          const tx = await contract.connectWallet();
+          showChainOverlay('Confirming on Arc Testnet…', 'Waiting for the connect transaction to be mined.');
+          await tx.wait();
+          sfx.txOk();
+        }catch(txErr){
+          console.warn('Connect transaction failed/rejected:', txErr);
+          sfx.txFail();
+          status.textContent = 'Connected, but the connect transaction failed: ' + (txErr.shortMessage || txErr.message || 'unknown error');
+        }
+        hideChainOverlay();
+      }
+
+      onWalletConnected(address);
+      provider.on && provider.on('accountsChanged', (accs)=>{
         if(accs.length===0) onWalletDisconnected(); else onWalletConnected(accs[0]);
       });
     }catch(err){
+      hideChainOverlay();
       console.error(err);
       status.textContent = 'Connection failed: ' + (err.shortMessage || err.message);
     }
-  });
+  }
 
   document.getElementById('connectWCBtn').addEventListener('click', async ()=>{
     actx();
@@ -956,11 +1089,7 @@
         }
       });
       await wcProvider.connect();
-      rawProvider = wcProvider;
-      ethersProvider = new ethers.BrowserProvider(wcProvider);
-      const accounts = await wcProvider.request({ method:'eth_accounts' });
-      status.textContent = '';
-      onWalletConnected(accounts[0]);
+      await connectWithProvider(wcProvider, 'WalletConnect');
       wcProvider.on('accountsChanged', (accs)=>{
         if(accs.length===0) onWalletDisconnected(); else onWalletConnected(accs[0]);
       });

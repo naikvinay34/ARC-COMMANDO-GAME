@@ -2,14 +2,19 @@
 
 A browser-playable, original 2D platformer (own character "Commando",
 own art — not Nintendo's Mario) built for **Arc Testnet** (Circle's
-stablecoin-native L1, chain ID `5042002`). Connect any EVM wallet —
-via a browser extension or WalletConnect (any mobile wallet, scan a
-QR code) — and:
+stablecoin-native L1, chain ID `5042002`). Connect any EVM wallet and:
 
+- **every installed browser wallet is listed individually** via
+  EIP-6963 discovery (MetaMask, Rabby, Coinbase Wallet, Brave Wallet,
+  etc. all show up as separate buttons if you have more than one
+  installed) — plus a WalletConnect option for any mobile wallet via
+  QR code
 - **you must connect a wallet to play** — the Start button stays
   locked until you do
-- **starting a run signs an on-chain transaction** (`startGame()`)
-  on Arc Testnet — real gas, no value transfer
+- **connecting a wallet signs an on-chain transaction**
+  (`connectWallet()`) — a real transaction that costs Arc Testnet gas,
+  same as any other tx. No extra fee is collected on top of gas.
+- **starting a run signs another on-chain transaction** (`startGame()`)
 - **every life you lose signs another on-chain transaction**
   (`recordLifeLost()`) before the loss is applied — the game pauses
   with a "confirm in wallet" overlay each time
@@ -22,15 +27,27 @@ QR code) — and:
 - finishing the level lets you **mint a one-per-wallet completion
   badge NFT**
 - **background music and sound effects** are synthesized live in the
-  browser with the Web Audio API — no external audio files, so
-  there's nothing to license or host. A 🔊/🔇 button in the HUD mutes
-  everything.
+  browser with the Web Audio API — an original bouncy chiptune loop
+  plus SFX for every action, no external audio files. (It can't
+  reproduce the actual Super Mario theme — that melody is Nintendo's
+  copyrighted work — but it's written to sit in the same energetic,
+  bouncy platformer spirit.) A 🔊/🔇 button in the HUD mutes everything.
+- if a contract address in `config.js` is still the placeholder zero
+  address, a **warning banner** appears on the start screen telling
+  you exactly which transactions won't fire until you deploy it —
+  no more silently-skipped signatures.
+- **fully responsive layout** — the game stage scales to fit any
+  screen using both width and height constraints (so it never
+  overflows on short/landscape phones), all text and buttons scale
+  with the stage size via CSS container queries instead of fixed
+  pixel sizes, touch controls only appear on touch devices, and the
+  footer hides on very short viewports to save space.
 
-Heads up on UX: because every life lost asks for a wallet signature,
-a rough run can mean several signature prompts in a row. That's by
-design here, but worth knowing before you hand this to playtesters —
-it trades smooth gameplay for an on-chain paper trail of every life
-lost.
+Heads up on UX: connecting, starting, and every life lost each ask
+for a wallet signature, so a rough run can mean several prompts in a
+row. That's by design here, but worth knowing before you hand this to
+playtesters — it trades smooth gameplay for an on-chain paper trail of
+every connect, start, and life lost.
 
 No build step, no npm install — it's plain HTML/CSS/JS. Open
 `index.html` in any browser, or host it (GitHub Pages / Vercel, see
@@ -94,7 +111,7 @@ for gas.
 2. **Get test USDC** from the Arc faucet (linked from https://docs.arc.io) to cover gas.
 3. **Deploy both contracts** via [Remix](https://remix.ethereum.org) (no install needed):
    - Paste in `contracts/LevelCompleteBadge.sol`, compile with Solidity `0.8.20+`, deploy with Environment set to "Injected Provider" on Arc Testnet.
-   - Repeat for `contracts/ArcCommandoScoreboard.sol` — this one now also has `startGame()` and `recordLifeLost()`, called automatically by the game when a run starts and each time a life is lost.
+   - Repeat for `contracts/ArcCommandoScoreboard.sol` — this one now also has `connectWallet()`, `startGame()`, and `recordLifeLost()`, called automatically by the game on connect, on run start, and on each life lost.
    - Both files have zero imports, so they also drop straight into Hardhat/Foundry if you'd rather use those.
 
 If a player's wallet has no testnet USDC, the "🚰 Get Testnet USDC" button that appears after connecting sends them to https://faucet.circle.com (official Circle faucet, select Arc Testnet). For developer-focused daily claims there's also https://arc-faucet.dev.

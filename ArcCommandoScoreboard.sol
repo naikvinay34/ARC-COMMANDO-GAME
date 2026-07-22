@@ -12,10 +12,20 @@ contract ArcCommandoScoreboard {
     mapping(address => uint256) public runsSubmitted;
     mapping(address => uint256) public gamesStarted;
     mapping(address => uint256) public livesLost;
+    mapping(address => uint256) public connections;
 
     event ScoreSubmitted(address indexed player, uint256 score, uint256 newHighScore, bool isNewRecord);
     event GameStarted(address indexed player, uint256 sessionNumber, uint256 timestamp);
     event LifeLost(address indexed player, uint256 lifeLossNumber, uint256 timestamp);
+    event WalletConnected(address indexed player, uint256 connectionNumber, uint256 timestamp);
+
+    /// @notice Called once when a wallet connects to the game. Purely an
+    ///         on-chain "I connected" receipt — costs normal Arc Testnet
+    ///         gas, no value transfer, no fee collected.
+    function connectWallet() external {
+        connections[msg.sender] += 1;
+        emit WalletConnected(msg.sender, connections[msg.sender], block.timestamp);
+    }
 
     /// @notice Called once when a run begins. Purely an on-chain "I started
     ///         a game" receipt — costs normal Arc Testnet gas, no transfer.
