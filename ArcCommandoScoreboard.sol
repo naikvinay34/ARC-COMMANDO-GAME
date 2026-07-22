@@ -10,8 +10,26 @@ pragma solidity ^0.8.20;
 contract ArcCommandoScoreboard {
     mapping(address => uint256) public highScore;
     mapping(address => uint256) public runsSubmitted;
+    mapping(address => uint256) public gamesStarted;
+    mapping(address => uint256) public livesLost;
 
     event ScoreSubmitted(address indexed player, uint256 score, uint256 newHighScore, bool isNewRecord);
+    event GameStarted(address indexed player, uint256 sessionNumber, uint256 timestamp);
+    event LifeLost(address indexed player, uint256 lifeLossNumber, uint256 timestamp);
+
+    /// @notice Called once when a run begins. Purely an on-chain "I started
+    ///         a game" receipt — costs normal Arc Testnet gas, no transfer.
+    function startGame() external {
+        gamesStarted[msg.sender] += 1;
+        emit GameStarted(msg.sender, gamesStarted[msg.sender], block.timestamp);
+    }
+
+    /// @notice Called each time a player loses a life. Same idea as
+    ///         startGame — an on-chain receipt for the event, gas only.
+    function recordLifeLost() external {
+        livesLost[msg.sender] += 1;
+        emit LifeLost(msg.sender, livesLost[msg.sender], block.timestamp);
+    }
 
     /// @notice Submit a run's score. Only updates the stored high score
     ///         if this run beat the player's previous best.

@@ -6,12 +6,31 @@ stablecoin-native L1, chain ID `5042002`). Connect any EVM wallet —
 via a browser extension or WalletConnect (any mobile wallet, scan a
 QR code) — and:
 
+- **you must connect a wallet to play** — the Start button stays
+  locked until you do
+- **starting a run signs an on-chain transaction** (`startGame()`)
+  on Arc Testnet — real gas, no value transfer
+- **every life you lose signs another on-chain transaction**
+  (`recordLifeLost()`) before the loss is applied — the game pauses
+  with a "confirm in wallet" overlay each time
+- if your wallet has no gas, a **faucet button** appears after
+  connecting, linking straight to the Circle faucet for Arc Testnet
 - your **all-time best score** is read from an on-chain scoreboard and
   shown every time you play
 - finishing a run lets you **save your score on-chain** (only updates
   your record if it's a new best)
 - finishing the level lets you **mint a one-per-wallet completion
   badge NFT**
+- **background music and sound effects** are synthesized live in the
+  browser with the Web Audio API — no external audio files, so
+  there's nothing to license or host. A 🔊/🔇 button in the HUD mutes
+  everything.
+
+Heads up on UX: because every life lost asks for a wallet signature,
+a rough run can mean several signature prompts in a row. That's by
+design here, but worth knowing before you hand this to playtesters —
+it trades smooth gameplay for an on-chain paper trail of every life
+lost.
 
 No build step, no npm install — it's plain HTML/CSS/JS. Open
 `index.html` in any browser, or host it (GitHub Pages / Vercel, see
@@ -75,8 +94,10 @@ for gas.
 2. **Get test USDC** from the Arc faucet (linked from https://docs.arc.io) to cover gas.
 3. **Deploy both contracts** via [Remix](https://remix.ethereum.org) (no install needed):
    - Paste in `contracts/LevelCompleteBadge.sol`, compile with Solidity `0.8.20+`, deploy with Environment set to "Injected Provider" on Arc Testnet.
-   - Repeat for `contracts/ArcCommandoScoreboard.sol`.
+   - Repeat for `contracts/ArcCommandoScoreboard.sol` — this one now also has `startGame()` and `recordLifeLost()`, called automatically by the game when a run starts and each time a life is lost.
    - Both files have zero imports, so they also drop straight into Hardhat/Foundry if you'd rather use those.
+
+If a player's wallet has no testnet USDC, the "🚰 Get Testnet USDC" button that appears after connecting sends them to https://faucet.circle.com (official Circle faucet, select Arc Testnet). For developer-focused daily claims there's also https://arc-faucet.dev.
 4. **Copy both deployed addresses** into `config.js`:
    ```js
    const CONTRACT_ADDRESS   = "0xYourBadgeContractAddress";

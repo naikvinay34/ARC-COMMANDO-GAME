@@ -50,15 +50,19 @@
     display:flex; justify-content:space-between; align-items:center;
     padding:10px 14px;
     font-size:10px;
-    pointer-events:none;
     text-shadow:2px 2px 0 rgba(0,0,0,.55);
   }
-  #hud .row{ display:flex; align-items:center; gap:12px; }
+  #hud .row{ display:flex; align-items:center; gap:12px; pointer-events:none; }
   #hud .coin-dot{ color:var(--gold); }
   #hud .life-dot{ color:var(--coral); }
   #hud .gun-dot{ color:#8fe9ff; }
   #hud .best{ color:#c9cbe0; font-size:9px; }
   #hud .best b{ color:var(--gold); }
+  #soundBtn{
+    pointer-events:auto; cursor:pointer; background:rgba(13,15,34,.55);
+    border:1px solid #383c63; border-radius:6px; color:var(--paper);
+    font-size:13px; padding:4px 7px;
+  }
 
   .overlay{
     position:absolute; inset:0;
@@ -67,6 +71,7 @@
     backdrop-filter:blur(1px);
     overflow-y:auto;
     padding:16px 0;
+    z-index:5;
   }
   .hidden{ display:none !important; }
 
@@ -105,6 +110,7 @@
   button.pixel-btn.secondary{ background:var(--teal); border-bottom-color:#1c8f79; color:#04231c; }
   button.pixel-btn.violet{ background:var(--violet); border-bottom-color:#4c1d95; color:#f4f1ea; }
   button.pixel-btn.ghost{ background:#2b2f52; border-bottom-color:#181b32; color:var(--paper); }
+  button.pixel-btn.faucet{ background:#ffb020; border-bottom-color:#a86a00; color:#2a1a00; }
   button.pixel-btn:disabled{ background:#4a4e6b; border-bottom-color:#33364d; color:#9598b3; cursor:default; }
   .btn-row{ display:flex; gap:8px; }
   .btn-row button{ flex:1; }
@@ -114,10 +120,25 @@
 
   .wallet-pill{
     font-size:10px; background:#0d0f22; border:1px solid #383c63; border-radius:20px;
-    padding:6px 12px; display:inline-block; margin-bottom:12px; color:#9db4ff;
+    padding:6px 12px; display:inline-block; margin-bottom:10px; color:#9db4ff;
+  }
+  .balance-pill{
+    font-size:9px; background:#0d0f22; border:1px solid #383c63; border-radius:20px;
+    padding:5px 10px; display:inline-block; margin-bottom:10px; margin-left:6px; color:#ffd23f;
   }
 
   #start-hint{ font-size:9px; color:#c9cbe0; margin-top:14px; line-height:1.9;}
+
+  #chainOverlay{
+    z-index:20; background:rgba(10,11,26,.88);
+  }
+  #chainOverlay .card{ width:min(80%,340px); }
+  .spinner{
+    width:26px; height:26px; margin:4px auto 14px;
+    border:4px solid #383c63; border-top-color:var(--gold);
+    border-radius:50%; animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
 
   /* Touch controls */
   #touch{
@@ -159,17 +180,18 @@
     <div class="row">
       <span class="best">BEST <b id="hudBest">–</b></span>
       <span>SCORE <span id="scoreCount">0</span></span>
+      <button id="soundBtn" class="pixel-font" title="Toggle sound">🔊</button>
     </div>
   </div>
 
-  <!-- Start screen -->
+  <!-- Start screen: wallet connection is mandatory to unlock Start -->
   <div id="startScreen" class="overlay">
     <div class="card">
       <h1 class="pixel-font">ARC COMMANDO</h1>
       <h2 class="pixel-font">a wallet-linked Arc Testnet platformer</h2>
 
       <div id="walletBlock">
-        <p style="margin-bottom:10px;">Connect any EVM wallet to save your run and see your all-time best score.</p>
+        <p style="margin-bottom:10px;">Connect a wallet to play. Starting a run and every life you lose each sign a small transaction on <b>Arc Testnet</b>.</p>
         <div class="btn-row">
           <button class="pixel-btn ghost" id="connectInjectedBtn">🦊 Browser Wallet</button>
           <button class="pixel-btn ghost" id="connectWCBtn">🔗 WalletConnect</button>
@@ -179,17 +201,30 @@
 
       <div id="walletConnectedBlock" class="hidden">
         <div class="wallet-pill" id="walletAddrPill"></div>
+        <span class="balance-pill" id="balancePill"></span>
         <div class="stat">Your all-time best score: <b id="startBest">0</b></div>
+
+        <button class="pixel-btn faucet hidden" id="faucetBtn">🚰 GET TESTNET USDC (FAUCET)</button>
+
         <button class="pixel-btn ghost" id="disconnectBtn" style="margin-top:6px;">Disconnect</button>
       </div>
 
       <div class="divider"></div>
       <p>Guide Commando across the pipeline: grab data-coins, stomp or shoot glitches, pick up the ◆ gun to fight back, grab ♥ for an extra life, and take down the armored bugs before they let you pass. Reach the beacon to finish the level.</p>
-      <button class="pixel-btn" id="startBtn">▶ START GAME</button>
+      <button class="pixel-btn" id="startBtn" disabled>🔒 CONNECT WALLET TO PLAY</button>
       <div id="start-hint">
         Desktop: ← → move · ↑/Space jump · X shoot (once armed)<br/>
         Mobile: on-screen pad, jump &amp; shoot buttons
       </div>
+    </div>
+  </div>
+
+  <!-- Blocking overlay shown while a start/life-loss transaction is pending -->
+  <div id="chainOverlay" class="overlay hidden">
+    <div class="card">
+      <div class="spinner"></div>
+      <h2 class="pixel-font" id="chainOverlayTitle">Confirm in your wallet…</h2>
+      <p id="chainOverlayText" style="margin:0;">Waiting for Arc Testnet confirmation.</p>
     </div>
   </div>
 
@@ -202,7 +237,7 @@
       <div class="stat">All-time best: <b id="overBest">0</b></div>
       <button class="pixel-btn violet" id="saveScoreOverBtn">💾 SAVE SCORE ON ARC TESTNET</button>
       <div class="mint-status" id="saveStatusOver"></div>
-      <button class="pixel-btn" id="retryBtn">↻ TRY AGAIN</button>
+      <button class="pixel-btn" id="retryBtn">↻ TRY AGAIN (sign tx)</button>
     </div>
   </div>
 
@@ -220,7 +255,7 @@
       <button class="pixel-btn secondary" id="mintBtn" style="margin-top:14px;">⛓ MINT BADGE ON ARC TESTNET</button>
       <div class="mint-status" id="mintStatus"></div>
 
-      <button class="pixel-btn" id="playAgainBtn" style="margin-top:14px;">↻ PLAY AGAIN</button>
+      <button class="pixel-btn" id="playAgainBtn" style="margin-top:14px;">↻ PLAY AGAIN (sign tx)</button>
     </div>
   </div>
 
@@ -236,7 +271,7 @@
   </div>
 </div>
 
-<footer>Original characters &amp; art — not affiliated with Nintendo. Runs on Arc Testnet (chain 5042002).</footer>
+<footer>Original characters &amp; art — not affiliated with Nintendo. Runs on Arc Testnet (chain 5042002). Music/SFX are synthesized in-browser, no external audio files.</footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.15.0/ethers.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/index.umd.js"></script>
@@ -316,7 +351,7 @@
   parseMap();
 
   const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
+  const ctx2d = canvas.getContext('2d');
   let camX = 0;
 
   function freshPlayer(){
@@ -331,9 +366,9 @@
   let elapsed = 0;
   let running = false;
   let won = false;
+  let awaitingChainTx = false;
 
   const keys = { left:false, right:false, jump:false, shoot:false };
-  let shootLatch = false;
 
   window.addEventListener('keydown', e => {
     if(['ArrowLeft','a','A'].includes(e.key)) keys.left = true;
@@ -385,9 +420,74 @@
 
   let dt = 0, lastT = 0;
 
+  // ---------------------------------------------------------------
+  // Audio — synthesized in-browser (Web Audio API), no audio files
+  // ---------------------------------------------------------------
+  let soundOn = true;
+  let audioCtx = null;
+  function actx(){
+    if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+  function tone(freq, dur, type, vol, when){
+    if(!soundOn) return;
+    try{
+      const c = actx();
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = type || 'square';
+      osc.frequency.value = freq;
+      const t0 = c.currentTime + (when||0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(vol||0.12, t0+0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0+(dur||0.12));
+      osc.connect(g); g.connect(c.destination);
+      osc.start(t0); osc.stop(t0+(dur||0.12)+0.03);
+    }catch(e){ /* audio not available yet — ignore */ }
+  }
+  const sfx = {
+    jump:   ()=> tone(520,0.12,'square',0.12),
+    coin:   ()=> { tone(880,0.07,'square',0.12); tone(1320,0.08,'square',0.1,0.06); },
+    shoot:  ()=> tone(1200,0.05,'sawtooth',0.07),
+    stomp:  ()=> tone(180,0.12,'square',0.14),
+    kill:   ()=> { tone(320,0.07,'square',0.13); tone(160,0.12,'square',0.1,0.06); },
+    hurt:   ()=> tone(140,0.28,'sawtooth',0.18),
+    gun:    ()=> [660,880,1100].forEach((f,i)=>tone(f,0.09,'square',0.12,i*0.08)),
+    life:   ()=> [523,659,784,1046].forEach((f,i)=>tone(f,0.1,'triangle',0.12,i*0.08)),
+    win:    ()=> [523,659,784,1046,784,1046].forEach((f,i)=>tone(f,0.16,'square',0.13,i*0.13)),
+    lose:   ()=> [392,330,262,196].forEach((f,i)=>tone(f,0.26,'sawtooth',0.15,i*0.2)),
+    txGo:   ()=> tone(700,0.07,'sine',0.08),
+    txOk:   ()=> { tone(880,0.07,'sine',0.1); tone(1100,0.09,'sine',0.1,0.08); },
+    txFail: ()=> tone(150,0.3,'sawtooth',0.15),
+  };
+
+  let musicTimer = null, musicStep = 0;
+  const musicPattern = [196,196,247,196,220,196,247,294,196,196,247,262,220,196,175,196];
+  function startMusic(){
+    if(musicTimer) return;
+    musicStep = 0;
+    musicTimer = setInterval(()=>{
+      if(soundOn){
+        const f = musicPattern[musicStep % musicPattern.length];
+        tone(f, 0.2, 'triangle', 0.045);
+        if(musicStep % 4 === 0) tone(f*2, 0.08, 'square', 0.025, 0.02);
+      }
+      musicStep++;
+    }, 240);
+  }
+  function stopMusic(){ clearInterval(musicTimer); musicTimer = null; }
+
+  document.getElementById('soundBtn').addEventListener('click', ()=>{
+    soundOn = !soundOn;
+    document.getElementById('soundBtn').textContent = soundOn ? '🔊' : '🔇';
+    if(soundOn) actx();
+  });
+
   function killEnemy(en, bonus){
     en.alive = false;
     score += bonus;
+    sfx.kill();
   }
 
   function update(t){
@@ -399,38 +499,33 @@
     player.vx = 0;
     if(keys.left){ player.vx = -MOVE_SPEED; player.facing = -1; }
     if(keys.right){ player.vx = MOVE_SPEED; player.facing = 1; }
-    if(keys.jump && player.onGround){ player.vy = JUMP_VEL; }
+    if(keys.jump && player.onGround){ player.vy = JUMP_VEL; sfx.jump(); }
 
     if(player.shootCd > 0) player.shootCd -= dt;
     if(keys.shoot && player.hasGun && player.shootCd <= 0){
       bullets.push({ x: player.x + player.w/2, y: player.y + 6, vx: BULLET_SPEED*player.facing, life: 1.1 });
       player.shootCd = SHOOT_COOLDOWN;
+      sfx.shoot();
     }
 
     player.vy += GRAVITY * dt;
     resolveSolids(player);
     if(player.invuln > 0) player.invuln -= dt;
-    if(player.y > LEVEL_H + 100) loseLife();
+    if(player.y > LEVEL_H + 100) requestLifeLoss();
 
-    // coins
     for(const c of coins){
-      if(!c.taken && aabb(player,c)){ c.taken = true; coinsCollected++; score += 50; }
+      if(!c.taken && aabb(player,c)){ c.taken = true; coinsCollected++; score += 50; sfx.coin(); }
     }
 
-    // powerups
     for(const pu of powerups){
       if(!pu.taken && aabb(player,pu)){
         pu.taken = true;
-        if(pu.type === 'gun'){ player.hasGun = true; }
-        else if(pu.type === 'life'){ lives = Math.min(lives+1, 9); }
+        if(pu.type === 'gun'){ player.hasGun = true; sfx.gun(); }
+        else if(pu.type === 'life'){ lives = Math.min(lives+1, 9); sfx.life(); }
       }
     }
 
-    // bullets
-    for(const b of bullets){
-      b.x += b.vx*dt;
-      b.life -= dt;
-    }
+    for(const b of bullets){ b.x += b.vx*dt; b.life -= dt; }
     bullets = bullets.filter(b => b.life > 0);
     for(const b of bullets){
       for(const en of enemies){
@@ -440,12 +535,12 @@
           en.hp -= 1;
           b.life = 0;
           if(en.hp <= 0) killEnemy(en, en.type==='insect' ? 250 : 150);
+          else sfx.stomp();
         }
       }
     }
     bullets = bullets.filter(b => b.life > 0);
 
-    // enemies
     for(const en of enemies){
       if(!en.alive) continue;
       en.x += en.vx * dt;
@@ -457,8 +552,9 @@
           en.hp -= 1;
           player.vy = JUMP_VEL*0.5;
           if(en.hp <= 0) killEnemy(en, en.type==='insect' ? 250 : 100);
+          else sfx.stomp();
         } else if(player.invuln <= 0){
-          loseLife();
+          requestLifeLoss();
         }
       }
     }
@@ -474,8 +570,42 @@
     requestAnimationFrame(update);
   }
 
-  function loseLife(){
-    if(player.invuln > 0) return;
+  // ---------------------------------------------------------------
+  // Life loss now signs an on-chain transaction (recordLifeLost) on
+  // Arc Testnet before the loss is actually applied. Game pauses
+  // during the signature/confirmation.
+  // ---------------------------------------------------------------
+  function requestLifeLoss(){
+    if(awaitingChainTx || player.invuln > 0) return;
+    awaitingChainTx = true;
+    running = false;
+    sfx.hurt();
+    showChainOverlay('Life lost — confirm in wallet…', 'Signing a small transaction on Arc Testnet for this loss.');
+    recordLifeLossOnChain().finally(()=>{
+      hideChainOverlay();
+      awaitingChainTx = false;
+      applyLifeLoss();
+    });
+  }
+
+  async function recordLifeLossOnChain(){
+    if(!walletAddress || !ethersProvider || SCOREBOARD_ADDRESS === ZERO_ADDR) return;
+    try{
+      await ensureArcNetwork(rawProvider);
+      const signer = await ethersProvider.getSigner();
+      const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
+      sfx.txGo();
+      const tx = await contract.recordLifeLost();
+      await tx.wait();
+      sfx.txOk();
+      refreshBalance();
+    }catch(err){
+      console.warn('Life-loss transaction skipped/failed:', err);
+      sfx.txFail();
+    }
+  }
+
+  function applyLifeLoss(){
     lives--;
     player.invuln = 1.5;
     if(lives <= 0){
@@ -484,11 +614,14 @@
       return;
     }
     player.x = playerSpawn.x; player.y = playerSpawn.y; player.vx=0; player.vy=0;
+    running = true;
   }
 
   function completeLevel(){
     won = true;
     running = false;
+    stopMusic();
+    sfx.win();
     document.getElementById('winCoins').textContent = coinsCollected;
     document.getElementById('winScore').textContent = score;
     document.getElementById('winBest').textContent = Math.max(bestScore, score);
@@ -497,6 +630,8 @@
   }
 
   function showGameOver(){
+    stopMusic();
+    sfx.lose();
     document.getElementById('finalScore').textContent = score;
     document.getElementById('overBest').textContent = Math.max(bestScore, score);
     document.getElementById('overScreen').classList.remove('hidden');
@@ -520,201 +655,181 @@
     document.getElementById('hudBest').textContent = walletAddress ? Math.max(bestScore, score) : '–';
   }
 
+  function showChainOverlay(title, text){
+    document.getElementById('chainOverlayTitle').textContent = title;
+    document.getElementById('chainOverlayText').textContent = text;
+    document.getElementById('chainOverlay').classList.remove('hidden');
+  }
+  function hideChainOverlay(){
+    document.getElementById('chainOverlay').classList.add('hidden');
+  }
+
   // ---------------------------------------------------------------
   // Rendering — everything hand-drawn with primitives, no image assets
   // ---------------------------------------------------------------
   function render(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx2d.clearRect(0,0,canvas.width,canvas.height);
 
-    ctx.fillStyle = '#a9dfae';
+    ctx2d.fillStyle = '#a9dfae';
     for(let i=0;i<6;i++){
       const hx = (i*300 - camX*0.3) % 1800 - 200;
-      ctx.beginPath(); ctx.ellipse(hx, 470, 160, 90, 0, 0, Math.PI*2); ctx.fill();
+      ctx2d.beginPath(); ctx2d.ellipse(hx, 470, 160, 90, 0, 0, Math.PI*2); ctx2d.fill();
     }
-    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx2d.fillStyle = 'rgba(255,255,255,.85)';
     for(let i=0;i<8;i++){
       const cx = (i*260 - camX*0.5) % 2200 - 200;
       const cy = 60 + (i%3)*30;
-      ctx.beginPath();
-      ctx.ellipse(cx,cy,34,16,0,0,Math.PI*2);
-      ctx.ellipse(cx+26,cy+6,24,13,0,0,Math.PI*2);
-      ctx.fill();
+      ctx2d.beginPath();
+      ctx2d.ellipse(cx,cy,34,16,0,0,Math.PI*2);
+      ctx2d.ellipse(cx+26,cy+6,24,13,0,0,Math.PI*2);
+      ctx2d.fill();
     }
 
-    ctx.save();
-    ctx.translate(-camX, 0);
+    ctx2d.save();
+    ctx2d.translate(-camX, 0);
 
     for(const s of solids){
       if(s.brick){
-        ctx.fillStyle = '#b5651d'; ctx.fillRect(s.x,s.y,s.w,s.h);
-        ctx.strokeStyle = '#7a3f10'; ctx.lineWidth = 2; ctx.strokeRect(s.x+1,s.y+1,s.w-2,s.h-2);
+        ctx2d.fillStyle = '#b5651d'; ctx2d.fillRect(s.x,s.y,s.w,s.h);
+        ctx2d.strokeStyle = '#7a3f10'; ctx2d.lineWidth = 2; ctx2d.strokeRect(s.x+1,s.y+1,s.w-2,s.h-2);
       } else {
-        ctx.fillStyle = '#6a8f3f'; ctx.fillRect(s.x,s.y,s.w,6);
-        ctx.fillStyle = '#8c5a2f'; ctx.fillRect(s.x,s.y+6,s.w,s.h-6);
+        ctx2d.fillStyle = '#6a8f3f'; ctx2d.fillRect(s.x,s.y,s.w,6);
+        ctx2d.fillStyle = '#8c5a2f'; ctx2d.fillRect(s.x,s.y+6,s.w,s.h-6);
       }
     }
 
     const bob = Math.sin(elapsed*6);
     for(const c of coins){
       if(c.taken) continue;
-      ctx.save();
-      ctx.translate(c.x+8, c.y+8+bob*2);
-      ctx.fillStyle = '#ffd23f';
-      ctx.beginPath(); ctx.ellipse(0,0, Math.abs(Math.sin(elapsed*3))*7+3, 8, 0,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle = '#c98d00'; ctx.lineWidth=2; ctx.stroke();
-      ctx.restore();
+      ctx2d.save();
+      ctx2d.translate(c.x+8, c.y+8+bob*2);
+      ctx2d.fillStyle = '#ffd23f';
+      ctx2d.beginPath(); ctx2d.ellipse(0,0, Math.abs(Math.sin(elapsed*3))*7+3, 8, 0,0,Math.PI*2); ctx2d.fill();
+      ctx2d.strokeStyle = '#c98d00'; ctx2d.lineWidth=2; ctx2d.stroke();
+      ctx2d.restore();
     }
 
     for(const pu of powerups){
       if(pu.taken) continue;
-      ctx.save();
-      ctx.translate(pu.x+12, pu.y+12+Math.sin(elapsed*4)*3);
+      ctx2d.save();
+      ctx2d.translate(pu.x+12, pu.y+12+Math.sin(elapsed*4)*3);
       if(pu.type === 'gun'){
-        ctx.fillStyle = '#8fe9ff';
-        ctx.beginPath(); ctx.moveTo(-10,4); ctx.lineTo(10,4); ctx.lineTo(6,-6); ctx.lineTo(-10,-6); ctx.fill();
-        ctx.fillStyle = '#0d0f22'; ctx.fillRect(-2,-10,4,6);
+        ctx2d.fillStyle = '#8fe9ff';
+        ctx2d.beginPath(); ctx2d.moveTo(-10,4); ctx2d.lineTo(10,4); ctx2d.lineTo(6,-6); ctx2d.lineTo(-10,-6); ctx2d.fill();
+        ctx2d.fillStyle = '#0d0f22'; ctx2d.fillRect(-2,-10,4,6);
       } else {
-        ctx.fillStyle = '#ff5470';
-        ctx.beginPath();
-        ctx.moveTo(0,8);
-        ctx.bezierCurveTo(-14,-2,-10,-14,0,-6);
-        ctx.bezierCurveTo(10,-14,14,-2,0,8);
-        ctx.fill();
+        ctx2d.fillStyle = '#ff5470';
+        ctx2d.beginPath();
+        ctx2d.moveTo(0,8);
+        ctx2d.bezierCurveTo(-14,-2,-10,-14,0,-6);
+        ctx2d.bezierCurveTo(10,-14,14,-2,0,8);
+        ctx2d.fill();
       }
-      ctx.strokeStyle = 'rgba(255,255,255,.6)'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(0,0,16,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
+      ctx2d.strokeStyle = 'rgba(255,255,255,.6)'; ctx2d.lineWidth=2;
+      ctx2d.beginPath(); ctx2d.arc(0,0,16,0,Math.PI*2); ctx2d.stroke();
+      ctx2d.restore();
     }
 
     for(const en of enemies){
       if(!en.alive) continue;
-      ctx.save();
+      ctx2d.save();
       const squish = 1 + Math.sin(elapsed*8)*0.06;
       if(en.type === 'insect'){
-        ctx.translate(en.x+21, en.y+22);
-        ctx.scale(1, squish);
-        ctx.fillStyle = '#c9382a';
-        ctx.beginPath(); ctx.ellipse(0,0,20,16,0,0,Math.PI*2); ctx.fill();
-        ctx.strokeStyle = '#6b1710'; ctx.lineWidth=2; ctx.stroke();
-        // wings
-        ctx.fillStyle = 'rgba(255,255,255,.35)';
-        ctx.beginPath(); ctx.ellipse(-6,-14,10,6,-0.3,0,Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.ellipse(6,-14,10,6,0.3,0,Math.PI*2); ctx.fill();
-        // eyes
-        ctx.fillStyle = '#ffd23f';
-        ctx.beginPath(); ctx.arc(-8,-2,4,0,Math.PI*2); ctx.arc(8,-2,4,0,Math.PI*2); ctx.fill();
-        // hp pips
+        ctx2d.translate(en.x+21, en.y+22);
+        ctx2d.scale(1, squish);
+        ctx2d.fillStyle = '#c9382a';
+        ctx2d.beginPath(); ctx2d.ellipse(0,0,20,16,0,0,Math.PI*2); ctx2d.fill();
+        ctx2d.strokeStyle = '#6b1710'; ctx2d.lineWidth=2; ctx2d.stroke();
+        ctx2d.fillStyle = 'rgba(255,255,255,.35)';
+        ctx2d.beginPath(); ctx2d.ellipse(-6,-14,10,6,-0.3,0,Math.PI*2); ctx2d.fill();
+        ctx2d.beginPath(); ctx2d.ellipse(6,-14,10,6,0.3,0,Math.PI*2); ctx2d.fill();
+        ctx2d.fillStyle = '#ffd23f';
+        ctx2d.beginPath(); ctx2d.arc(-8,-2,4,0,Math.PI*2); ctx2d.arc(8,-2,4,0,Math.PI*2); ctx2d.fill();
         for(let i=0;i<en.hp;i++){
-          ctx.fillStyle = '#ffd23f';
-          ctx.fillRect(-15+i*8,-26,5,4);
+          ctx2d.fillStyle = '#ffd23f';
+          ctx2d.fillRect(-15+i*8,-26,5,4);
         }
       } else {
-        ctx.translate(en.x+14, en.y+28);
-        ctx.scale(1, squish);
-        ctx.fillStyle = '#7c3aed';
-        ctx.beginPath(); ctx.ellipse(0,0,14,14,0,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(-8,-4,5,5); ctx.fillRect(3,-4,5,5);
-        ctx.fillStyle = '#1b1f3b';
-        ctx.fillRect(-6,-2,2,2); ctx.fillRect(5,-2,2,2);
+        ctx2d.translate(en.x+14, en.y+28);
+        ctx2d.scale(1, squish);
+        ctx2d.fillStyle = '#7c3aed';
+        ctx2d.beginPath(); ctx2d.ellipse(0,0,14,14,0,0,Math.PI*2); ctx2d.fill();
+        ctx2d.fillStyle = '#fff';
+        ctx2d.fillRect(-8,-4,5,5); ctx2d.fillRect(3,-4,5,5);
+        ctx2d.fillStyle = '#1b1f3b';
+        ctx2d.fillRect(-6,-2,2,2); ctx2d.fillRect(5,-2,2,2);
       }
-      ctx.restore();
+      ctx2d.restore();
     }
 
-    ctx.fillStyle = '#8fe9ff';
+    ctx2d.fillStyle = '#8fe9ff';
     for(const b of bullets){
-      ctx.beginPath(); ctx.ellipse(b.x,b.y,6,3,0,0,Math.PI*2); ctx.fill();
+      ctx2d.beginPath(); ctx2d.ellipse(b.x,b.y,6,3,0,0,Math.PI*2); ctx2d.fill();
     }
 
     if(flag){
-      ctx.fillStyle = '#9aa5b1';
-      ctx.fillRect(flag.x+4, flag.y, 4, flag.h);
-      ctx.fillStyle = won ? '#ffd23f' : '#ff5470';
-      ctx.beginPath();
-      ctx.moveTo(flag.x+8, flag.y+10);
-      ctx.lineTo(flag.x+32, flag.y+18);
-      ctx.lineTo(flag.x+8, flag.y+26);
-      ctx.fill();
+      ctx2d.fillStyle = '#9aa5b1';
+      ctx2d.fillRect(flag.x+4, flag.y, 4, flag.h);
+      ctx2d.fillStyle = won ? '#ffd23f' : '#ff5470';
+      ctx2d.beginPath();
+      ctx2d.moveTo(flag.x+8, flag.y+10);
+      ctx2d.lineTo(flag.x+32, flag.y+18);
+      ctx2d.lineTo(flag.x+8, flag.y+26);
+      ctx2d.fill();
     }
 
-    ctx.save();
+    ctx2d.save();
     const flicker = player.invuln > 0 && Math.floor(elapsed*20)%2===0;
     if(!flicker){
-      ctx.translate(player.x+player.w/2, player.y+player.h/2);
-      ctx.scale(player.facing,1);
-      ctx.fillStyle = '#2ec4a6';
-      ctx.fillRect(-13,-15,26,26);
-      ctx.strokeStyle = '#166b5b'; ctx.lineWidth=2;
-      ctx.strokeRect(-13,-15,26,26);
-      ctx.fillStyle = '#0d0f22';
-      ctx.fillRect(-9,-9,18,8);
-      ctx.fillStyle = '#8fe9ff';
-      ctx.fillRect(0,-8,7,6);
-      ctx.strokeStyle = '#ff5470'; ctx.lineWidth=3;
-      ctx.beginPath(); ctx.moveTo(0,-15); ctx.lineTo(0,-22); ctx.stroke();
-      ctx.fillStyle = '#ff5470';
-      ctx.beginPath(); ctx.arc(0,-23,3,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#166b5b';
+      ctx2d.translate(player.x+player.w/2, player.y+player.h/2);
+      ctx2d.scale(player.facing,1);
+      ctx2d.fillStyle = '#2ec4a6';
+      ctx2d.fillRect(-13,-15,26,26);
+      ctx2d.strokeStyle = '#166b5b'; ctx2d.lineWidth=2;
+      ctx2d.strokeRect(-13,-15,26,26);
+      ctx2d.fillStyle = '#0d0f22';
+      ctx2d.fillRect(-9,-9,18,8);
+      ctx2d.fillStyle = '#8fe9ff';
+      ctx2d.fillRect(0,-8,7,6);
+      ctx2d.strokeStyle = '#ff5470'; ctx2d.lineWidth=3;
+      ctx2d.beginPath(); ctx2d.moveTo(0,-15); ctx2d.lineTo(0,-22); ctx2d.stroke();
+      ctx2d.fillStyle = '#ff5470';
+      ctx2d.beginPath(); ctx2d.arc(0,-23,3,0,Math.PI*2); ctx2d.fill();
+      ctx2d.fillStyle = '#166b5b';
       const legOffset = player.onGround && Math.abs(player.vx) > 5 ? Math.sin(elapsed*18)*4 : 0;
-      ctx.fillRect(-10,11+legOffset,8,6);
-      ctx.fillRect(2,11-legOffset,8,6);
+      ctx2d.fillRect(-10,11+legOffset,8,6);
+      ctx2d.fillRect(2,11-legOffset,8,6);
       if(player.hasGun){
-        ctx.fillStyle = '#8fe9ff';
-        ctx.fillRect(10,-2,12,5);
+        ctx2d.fillStyle = '#8fe9ff';
+        ctx2d.fillRect(10,-2,12,5);
       }
     }
-    ctx.restore();
+    ctx2d.restore();
 
-    ctx.restore();
+    ctx2d.restore();
   }
-
-  // ---------------------------------------------------------------
-  // Screen flow
-  // ---------------------------------------------------------------
-  function resetGame(){
-    parseMap();
-    player = freshPlayer();
-    bullets = [];
-    coinsCollected = 0; score = 0; lives = 3; elapsed = 0; won = false;
-    document.getElementById('mintStatus').textContent = '';
-    document.getElementById('mintBtn').disabled = false;
-    document.getElementById('mintBtn').textContent = '⛓ MINT BADGE ON ARC TESTNET';
-    resetSaveButtons();
-  }
-
-  document.getElementById('startBtn').addEventListener('click', ()=>{
-    document.getElementById('startScreen').classList.add('hidden');
-    running = true;
-  });
-  document.getElementById('retryBtn').addEventListener('click', ()=>{
-    document.getElementById('overScreen').classList.add('hidden');
-    resetGame();
-    running = true;
-  });
-  document.getElementById('playAgainBtn').addEventListener('click', ()=>{
-    document.getElementById('winScreen').classList.add('hidden');
-    resetGame();
-    running = true;
-  });
 
   requestAnimationFrame(update);
   render();
 
   // ---------------------------------------------------------------
-  // Wallet connection (injected + WalletConnect) and on-chain calls
+  // Wallet connection (injected + WalletConnect)
   // ---------------------------------------------------------------
+  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
   const BADGE_ABI = [
     "function mint() external returns (uint256)",
     "function hasMinted(address) view returns (bool)",
     "function badgeOf(address) view returns (uint256)"
   ];
   const SCOREBOARD_ABI = [
+    "function startGame() external",
+    "function recordLifeLost() external",
     "function submitScore(uint256 score) external",
     "function getHighScore(address) view returns (uint256)"
   ];
 
-  let ethersProvider = null; // ethers.BrowserProvider
-  let rawProvider = null;    // window.ethereum OR walletconnect provider
+  let ethersProvider = null;
+  let rawProvider = null;
   let walletAddress = null;
   let bestScore = 0;
   let wcProvider = null;
@@ -745,8 +860,7 @@
   function shortAddr(a){ return a.slice(0,6) + '…' + a.slice(-4); }
 
   async function refreshBestScore(){
-    if(!walletAddress || !ethersProvider) return;
-    if(SCOREBOARD_ADDRESS === '0x0000000000000000000000000000000000000000') return;
+    if(!walletAddress || !ethersProvider || SCOREBOARD_ADDRESS === ZERO_ADDR) return;
     try{
       const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, ethersProvider);
       const hs = await contract.getHighScore(walletAddress);
@@ -756,12 +870,26 @@
     updateHud();
   }
 
+  async function refreshBalance(){
+    if(!walletAddress || !ethersProvider) return;
+    try{
+      const bal = await ethersProvider.getBalance(walletAddress);
+      const formatted = Number(ethers.formatUnits(bal, ARC_TESTNET.nativeCurrency.decimals));
+      document.getElementById('balancePill').textContent = formatted.toFixed(4) + ' USDC (gas)';
+      document.getElementById('faucetBtn').classList.toggle('hidden', formatted > 0.0005);
+    }catch(e){ console.warn('Could not read balance', e); }
+  }
+
   function onWalletConnected(address){
     walletAddress = address;
     document.getElementById('walletBlock').classList.add('hidden');
     document.getElementById('walletConnectedBlock').classList.remove('hidden');
     document.getElementById('walletAddrPill').textContent = '🟢 ' + shortAddr(address);
+    const startBtn = document.getElementById('startBtn');
+    startBtn.disabled = false;
+    startBtn.textContent = '▶ START GAME (sign tx)';
     refreshBestScore();
+    refreshBalance();
   }
 
   function onWalletDisconnected(){
@@ -769,10 +897,14 @@
     bestScore = 0;
     document.getElementById('walletBlock').classList.remove('hidden');
     document.getElementById('walletConnectedBlock').classList.add('hidden');
+    const startBtn = document.getElementById('startBtn');
+    startBtn.disabled = true;
+    startBtn.textContent = '🔒 CONNECT WALLET TO PLAY';
     updateHud();
   }
 
   document.getElementById('connectInjectedBtn').addEventListener('click', async ()=>{
+    actx(); // unlock audio on this user gesture
     const status = document.getElementById('walletStatus');
     if(!window.ethereum){
       status.textContent = 'No browser wallet found — install MetaMask, or use WalletConnect instead.';
@@ -797,6 +929,7 @@
   });
 
   document.getElementById('connectWCBtn').addEventListener('click', async ()=>{
+    actx();
     const status = document.getElementById('walletStatus');
     if(!window['@walletconnect/ethereum-provider']){
       status.textContent = 'WalletConnect library failed to load — check your connection and retry.';
@@ -844,17 +977,75 @@
     onWalletDisconnected();
   });
 
+  document.getElementById('faucetBtn').addEventListener('click', ()=>{
+    window.open('https://faucet.circle.com', '_blank', 'noopener');
+  });
+
+  // ---------------------------------------------------------------
+  // Begin a run: signs startGame() on Arc Testnet, then unpauses.
+  // Shared by Start / Try Again / Play Again.
+  // ---------------------------------------------------------------
+  async function beginRun(fromScreenId){
+    if(!walletAddress || !ethersProvider){
+      document.getElementById('walletStatus').textContent = 'Connect a wallet first.';
+      return;
+    }
+    showChainOverlay('Starting run — confirm in wallet…', 'Signing the start-game transaction on Arc Testnet.');
+    try{
+      if(SCOREBOARD_ADDRESS !== ZERO_ADDR){
+        await ensureArcNetwork(rawProvider);
+        const signer = await ethersProvider.getSigner();
+        const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
+        sfx.txGo();
+        const tx = await contract.startGame();
+        showChainOverlay('Confirming on Arc Testnet…', 'Waiting for the transaction to be mined.');
+        await tx.wait();
+        sfx.txOk();
+        refreshBalance();
+      }
+      hideChainOverlay();
+      document.getElementById(fromScreenId).classList.add('hidden');
+      resetGame();
+      running = true;
+      startMusic();
+    }catch(err){
+      console.error(err);
+      hideChainOverlay();
+      sfx.txFail();
+      const msg = 'Start transaction failed: ' + (err.shortMessage || err.message || 'unknown error');
+      const statusEl = document.getElementById('walletStatus');
+      if(statusEl) statusEl.textContent = msg;
+    }
+  }
+
+  function resetGame(){
+    parseMap();
+    player = freshPlayer();
+    bullets = [];
+    coinsCollected = 0; score = 0; lives = 3; elapsed = 0; won = false;
+    document.getElementById('mintStatus').textContent = '';
+    document.getElementById('mintBtn').disabled = false;
+    document.getElementById('mintBtn').textContent = '⛓ MINT BADGE ON ARC TESTNET';
+    resetSaveButtons();
+  }
+
+  document.getElementById('startBtn').addEventListener('click', ()=> beginRun('startScreen'));
+  document.getElementById('retryBtn').addEventListener('click', ()=>{
+    document.getElementById('overScreen').classList.add('hidden');
+    beginRun('overScreen');
+  });
+  document.getElementById('playAgainBtn').addEventListener('click', ()=>{
+    document.getElementById('winScreen').classList.add('hidden');
+    beginRun('winScreen');
+  });
+
   // ---------------------------------------------------------------
   // Save score on-chain (Win screen and Game Over screen share logic)
   // ---------------------------------------------------------------
   async function saveScore(btnId, statusId){
     const btn = document.getElementById(btnId);
     const status = document.getElementById(statusId);
-    if(!walletAddress || !ethersProvider){
-      status.textContent = 'Connect a wallet from the start screen first, then play again.';
-      return;
-    }
-    if(SCOREBOARD_ADDRESS === '0x0000000000000000000000000000000000000000'){
+    if(SCOREBOARD_ADDRESS === ZERO_ADDR){
       status.textContent = 'Scoreboard contract not deployed yet — see README.md, then set SCOREBOARD_ADDRESS in config.js.';
       return;
     }
@@ -864,16 +1055,20 @@
       const signer = await ethersProvider.getSigner();
       const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
       status.textContent = 'Confirm the transaction in your wallet…';
+      sfx.txGo();
       const tx = await contract.submitScore(score);
       status.textContent = 'Waiting for Arc Testnet confirmation…';
       const receipt = await tx.wait();
+      sfx.txOk();
       await refreshBestScore();
+      await refreshBalance();
       const explorerUrl = `${ARC_TESTNET.blockExplorerUrls[0]}/tx/${receipt.hash}`;
       const isRecord = score >= bestScore;
       status.innerHTML = (isRecord ? '🏆 New all-time best! ' : 'Saved. ') + `<a href="${explorerUrl}" target="_blank" rel="noopener">View on ArcScan ↗</a>`;
       btn.textContent = '✔ SCORE SAVED';
     }catch(err){
       console.error(err);
+      sfx.txFail();
       status.textContent = 'Save failed: ' + (err.shortMessage || err.message || 'unknown error');
       btn.disabled = false;
     }
@@ -882,18 +1077,14 @@
   document.getElementById('saveScoreOverBtn').addEventListener('click', ()=>saveScore('saveScoreOverBtn','saveStatusOver'));
 
   // ---------------------------------------------------------------
-  // Mint completion badge (unchanged flow, injected or WC signer)
+  // Mint completion badge
   // ---------------------------------------------------------------
   const mintBtn = document.getElementById('mintBtn');
   const mintStatus = document.getElementById('mintStatus');
 
   mintBtn.addEventListener('click', async ()=>{
     mintStatus.innerHTML = '';
-    if(!walletAddress || !ethersProvider){
-      mintStatus.textContent = 'Connect a wallet from the start screen first, then play again.';
-      return;
-    }
-    if(CONTRACT_ADDRESS === '0x0000000000000000000000000000000000000000'){
+    if(CONTRACT_ADDRESS === ZERO_ADDR){
       mintStatus.textContent = 'Badge contract not deployed yet — see README.md, then set CONTRACT_ADDRESS in config.js.';
       return;
     }
@@ -912,15 +1103,19 @@
       }
 
       mintStatus.textContent = 'Confirm the transaction in your wallet…';
+      sfx.txGo();
       const tx = await contract.mint();
       mintStatus.textContent = 'Waiting for Arc Testnet confirmation…';
       const receipt = await tx.wait();
+      sfx.txOk();
+      await refreshBalance();
 
       const explorerUrl = `${ARC_TESTNET.blockExplorerUrls[0]}/tx/${receipt.hash}`;
       mintStatus.innerHTML = `Minted! <a href="${explorerUrl}" target="_blank" rel="noopener">View on ArcScan ↗</a>`;
       mintBtn.textContent = '✔ BADGE MINTED';
     }catch(err){
       console.error(err);
+      sfx.txFail();
       mintStatus.textContent = 'Mint failed: ' + (err.shortMessage || err.message || 'unknown error');
       mintBtn.disabled = false;
     }
