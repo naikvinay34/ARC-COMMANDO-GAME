@@ -215,7 +215,7 @@
       <div id="configWarning" class="mint-status hidden" style="color:#ff9b6a; margin-bottom:10px;"></div>
 
       <div id="walletBlock">
-        <p style="margin-bottom:10px;">Connect a wallet to play. Connecting, starting a run, and every life you lose each sign a small transaction on <b>Arc Testnet</b>.</p>
+        <p style="margin-bottom:10px;">Connect a wallet to play. Connecting is a free signature (no gas). Starting a run and every life you lose each pay a small entry fee via a real transaction on <b>Arc Testnet</b>.</p>
         <div id="walletList" class="btn-row" style="flex-direction:column;"></div>
         <button class="pixel-btn ghost" id="connectWCBtn" style="margin-top:6px;">🔗 WalletConnect (any mobile wallet)</button>
         <div class="mint-status" id="walletStatus"></div>
@@ -259,7 +259,7 @@
       <div class="stat">All-time best: <b id="overBest">0</b></div>
       <button class="pixel-btn violet" id="saveScoreOverBtn">💾 SAVE SCORE ON ARC TESTNET</button>
       <div class="mint-status" id="saveStatusOver"></div>
-      <button class="pixel-btn" id="retryBtn">↻ TRY AGAIN (sign tx)</button>
+      <button class="pixel-btn" id="retryBtn">↻ TRY AGAIN (pay entry fee)</button>
     </div>
   </div>
 
@@ -277,7 +277,7 @@
       <button class="pixel-btn secondary" id="mintBtn" style="margin-top:14px;">⛓ MINT BADGE ON ARC TESTNET</button>
       <div class="mint-status" id="mintStatus"></div>
 
-      <button class="pixel-btn" id="playAgainBtn" style="margin-top:14px;">↻ PLAY AGAIN (sign tx)</button>
+      <button class="pixel-btn" id="playAgainBtn" style="margin-top:14px;">↻ PLAY AGAIN (pay entry fee)</button>
     </div>
   </div>
 
@@ -636,13 +636,12 @@
   }
 
   async function recordLifeLossOnChain(){
-    if(!walletAddress || !ethersProvider || SCOREBOARD_ADDRESS === ZERO_ADDR) return;
+    if(!walletAddress || !ethersProvider) return;
     try{
       await ensureArcNetwork(rawProvider);
       const signer = await ethersProvider.getSigner();
-      const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
       sfx.txGo();
-      const tx = await contract.recordLifeLost();
+      const tx = await signOnChainAction(signer, c => c.recordLifeLost());
       await tx.wait();
       sfx.txOk();
       refreshBalance();
@@ -869,6 +868,7 @@
     "function badgeOf(address) view returns (uint256)"
   ];
   const SCOREBOARD_ABI = [
+    "function connectWallet() external",
     "function startGame() external",
     "function recordLifeLost() external",
     "function submitScore(uint256 score) external",
@@ -882,6 +882,24 @@
   let wcProvider = null;
 
   const hexChainId = '0x' + ARC_TESTNET.chainId.toString(16);
+
+  // ---------------------------------------------------------------
+  // Always produces a REAL signed transaction that costs Arc Testnet
+  // gas: calls the scoreboard contract if it's deployed, otherwise
+  // falls back to a plain 0-value self-transfer. The fallback still
+  // has to go through the wallet's confirm screen and still costs
+  // real (small) gas — it just doesn't write to a custom contract
+  // until you deploy ArcCommandoScoreboard.sol and set
+  // SCOREBOARD_ADDRESS in config.js.
+  // ---------------------------------------------------------------
+  async function signOnChainAction(signer, contractCall){
+    if(SCOREBOARD_ADDRESS !== ZERO_ADDR){
+      const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
+      return await contractCall(contract);
+    }
+    const address = await signer.getAddress();
+    return await signer.sendTransaction({ to: address, value: 0 });
+  }
 
   async function ensureArcNetwork(provider){
     try{
@@ -934,7 +952,7 @@
     document.getElementById('walletAddrPill').textContent = '🟢 ' + shortAddr(address);
     const startBtn = document.getElementById('startBtn');
     startBtn.disabled = false;
-    startBtn.textContent = '▶ START GAME (sign tx)';
+    startBtn.textContent = '▶ START GAME (pay entry fee)';
     refreshBestScore();
     refreshBalance();
   }
@@ -955,12 +973,12 @@
   // instead of silently skipping transactions.
   // ---------------------------------------------------------------
   function checkConfigWarning(){
-    const missing = [];
-    if(SCOREBOARD_ADDRESS === ZERO_ADDR) missing.push('SCOREBOARD_ADDRESS (connect/start/loss/save-score transactions)');
-    if(CONTRACT_ADDRESS === ZERO_ADDR) missing.push('CONTRACT_ADDRESS (badge mint)');
     const el = document.getElementById('configWarning');
-    if(missing.length){
-      el.textContent = '⚠ Not deployed yet, so no on-chain transactions will fire: ' + missing.join('; ') + '. See README.md.';
+    if(SCOREBOARD_ADDRESS === ZERO_ADDR){
+      el.textContent = '⚠ SCOREBOARD_ADDRESS not deployed yet — the entry-fee tx on start (and life-loss) will still sign a plain self-transfer (real gas, no contract data), but on-chain best score and "save score" won\'t work until you deploy ArcCommandoScoreboard.sol. See README.md.';
+      el.classList.remove('hidden');
+    } else if(CONTRACT_ADDRESS === ZERO_ADDR){
+      el.textContent = '⚠ CONTRACT_ADDRESS (badge) not deployed yet — badge minting won\'t work until you deploy LevelCompleteBadge.sol. See README.md.';
       el.classList.remove('hidden');
     } else {
       el.classList.add('hidden');
@@ -1033,22 +1051,28 @@
       const address = await signer.getAddress();
       status.textContent = '';
 
-      if(SCOREBOARD_ADDRESS !== ZERO_ADDR){
-        showChainOverlay('Confirm wallet connection…', `Signing a connect receipt on Arc Testnet as ${label}.`);
-        try{
-          const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
-          sfx.txGo();
-          const tx = await contract.connectWallet();
-          showChainOverlay('Confirming on Arc Testnet…', 'Waiting for the connect transaction to be mined.');
-          await tx.wait();
-          sfx.txOk();
-        }catch(txErr){
-          console.warn('Connect transaction failed/rejected:', txErr);
-          sfx.txFail();
-          status.textContent = 'Connected, but the connect transaction failed: ' + (txErr.shortMessage || txErr.message || 'unknown error');
-        }
+      // Gasless "connect" step: a plain wallet signature, NOT a
+      // blockchain transaction. Nothing is broadcast, so it costs
+      // zero gas — it just proves this wallet controls the address.
+      showChainOverlay('Sign in to verify wallet…', 'Free — this is a signature, not a transaction. No gas is spent.');
+      try{
+        const message =
+          `Sign in to Arc Commando\n\n` +
+          `Wallet: ${address}\n` +
+          `Network: Arc Testnet (5042002)\n` +
+          `Time: ${new Date().toISOString()}\n` +
+          `Nonce: ${Math.floor(Math.random()*1e9)}`;
+        sfx.txGo();
+        await provider.request({ method:'personal_sign', params:[message, address] });
+        sfx.txOk();
+      }catch(signErr){
+        console.warn('Sign-in signature rejected/failed:', signErr);
+        sfx.txFail();
         hideChainOverlay();
+        status.textContent = 'Sign-in was rejected — connect again and approve the signature to play.';
+        return;
       }
+      hideChainOverlay();
 
       onWalletConnected(address);
       provider.on && provider.on('accountsChanged', (accs)=>{
@@ -1119,19 +1143,16 @@
       document.getElementById('walletStatus').textContent = 'Connect a wallet first.';
       return;
     }
-    showChainOverlay('Starting run — confirm in wallet…', 'Signing the start-game transaction on Arc Testnet.');
+    showChainOverlay('Starting run — confirm in wallet…', 'Paying the small Arc Testnet entry fee (gas) to start.');
     try{
-      if(SCOREBOARD_ADDRESS !== ZERO_ADDR){
-        await ensureArcNetwork(rawProvider);
-        const signer = await ethersProvider.getSigner();
-        const contract = new ethers.Contract(SCOREBOARD_ADDRESS, SCOREBOARD_ABI, signer);
-        sfx.txGo();
-        const tx = await contract.startGame();
-        showChainOverlay('Confirming on Arc Testnet…', 'Waiting for the transaction to be mined.');
-        await tx.wait();
-        sfx.txOk();
-        refreshBalance();
-      }
+      await ensureArcNetwork(rawProvider);
+      const signer = await ethersProvider.getSigner();
+      sfx.txGo();
+      const tx = await signOnChainAction(signer, c => c.startGame());
+      showChainOverlay('Confirming on Arc Testnet…', 'Waiting for the transaction to be mined.');
+      await tx.wait();
+      sfx.txOk();
+      refreshBalance();
       hideChainOverlay();
       document.getElementById(fromScreenId).classList.add('hidden');
       resetGame();

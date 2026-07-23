@@ -11,13 +11,18 @@ stablecoin-native L1, chain ID `5042002`). Connect any EVM wallet and:
   QR code
 - **you must connect a wallet to play** — the Start button stays
   locked until you do
-- **connecting a wallet signs an on-chain transaction**
-  (`connectWallet()`) — a real transaction that costs Arc Testnet gas,
-  same as any other tx. No extra fee is collected on top of gas.
-- **starting a run signs another on-chain transaction** (`startGame()`)
-- **every life you lose signs another on-chain transaction**
-  (`recordLifeLost()`) before the loss is applied — the game pauses
-  with a "confirm in wallet" overlay each time
+- **connecting a wallet is gasless** — it's a plain `personal_sign`
+  message signature, not a blockchain transaction, so it costs zero
+  gas. It just proves the wallet controls that address before you're
+  let in.
+- **starting a run (and every life you lose) pays a real entry fee**
+  — a real signed transaction that costs Arc Testnet gas. If you've
+  deployed `ArcCommandoScoreboard.sol` and set `SCOREBOARD_ADDRESS`,
+  it calls `startGame()` / `recordLifeLost()` on that contract. If you
+  haven't deployed it yet, it falls back to a plain 0-value
+  self-transfer instead — still a real signature, still real (small)
+  gas, it just doesn't write to a custom contract until you deploy
+  one.
 - if your wallet has no gas, a **faucet button** appears after
   connecting, linking straight to the Circle faucet for Arc Testnet
 - your **all-time best score** is read from an on-chain scoreboard and
@@ -33,9 +38,10 @@ stablecoin-native L1, chain ID `5042002`). Connect any EVM wallet and:
   copyrighted work — but it's written to sit in the same energetic,
   bouncy platformer spirit.) A 🔊/🔇 button in the HUD mutes everything.
 - if a contract address in `config.js` is still the placeholder zero
-  address, a **warning banner** appears on the start screen telling
-  you exactly which transactions won't fire until you deploy it —
-  no more silently-skipped signatures.
+  address, a **warning banner** appears on the start screen explaining
+  exactly what still works via the self-transfer fallback and what
+  needs the real contract deployed (on-chain best score, save-score,
+  badge mint).
 - **fully responsive layout** — the game stage scales to fit any
   screen using both width and height constraints (so it never
   overflows on short/landscape phones), all text and buttons scale
@@ -43,11 +49,20 @@ stablecoin-native L1, chain ID `5042002`). Connect any EVM wallet and:
   pixel sizes, touch controls only appear on touch devices, and the
   footer hides on very short viewports to save space.
 
-Heads up on UX: connecting, starting, and every life lost each ask
-for a wallet signature, so a rough run can mean several prompts in a
-row. That's by design here, but worth knowing before you hand this to
-playtesters — it trades smooth gameplay for an on-chain paper trail of
-every connect, start, and life lost.
+On real ERC-4337 "gasless" transactions (where a third party pays gas
+for the user, not just a free signature): Arc supports account
+abstraction for this, but it requires a paymaster service — a
+third-party provider like Pimlico or Biconomy, which means signing up
+for an account and an API key, similar to what you did for
+WalletConnect. That's a separate, bigger integration than this repo
+sets up; the connect step here uses a plain signature instead, which
+gets you the "no gas to connect" result without needing that
+infrastructure.
+
+Heads up on UX: starting a run and every life lost each ask for a
+wallet signature *and* pay gas, so a rough run can mean several
+paid prompts in a row. That's by design here, but worth knowing before
+you hand this to playtesters.
 
 No build step, no npm install — it's plain HTML/CSS/JS. Open
 `index.html` in any browser, or host it (GitHub Pages / Vercel, see
