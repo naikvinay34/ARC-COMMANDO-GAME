@@ -15,14 +15,25 @@ stablecoin-native L1, chain ID `5042002`). Connect any EVM wallet and:
   message signature, not a blockchain transaction, so it costs zero
   gas. It just proves the wallet controls that address before you're
   let in.
-- **starting a run (and every life you lose) pays a real entry fee**
-  — a real signed transaction that costs Arc Testnet gas. If you've
-  deployed `ArcCommandoScoreboard.sol` and set `SCOREBOARD_ADDRESS`,
-  it calls `startGame()` / `recordLifeLost()` on that contract. If you
-  haven't deployed it yet, it falls back to a plain 0-value
-  self-transfer instead — still a real signature, still real (small)
-  gas, it just doesn't write to a custom contract until you deploy
-  one.
+- **starting a game pays a real entry fee — once** — a real signed
+  transaction that costs Arc Testnet gas, charged only when you click
+  Start / Try Again / Play Again. Losing a life does NOT sign
+  anything — 3 lives = 1 paid game, exactly one transaction per game.
+  If you've deployed `ArcCommandoScoreboard.sol` and set
+  `SCOREBOARD_ADDRESS`, the entry fee calls `startGame()` on that
+  contract. If you haven't deployed it yet, it falls back to a plain
+  0-value self-transfer instead — still a real signature, still real
+  (small) gas, it just doesn't write to a custom contract until you
+  deploy one.
+- **4 themed levels** (Countryside → Sun-Scorched Desert → Frostbyte
+  Peaks → Deep Cavern), each with its own color palette and layout.
+  Clearing a level's flag shows a free "Continue" screen (no
+  transaction) into the next level; clearing the final level triggers
+  the full win screen with score-save and badge-mint.
+- **Bounce-Tales-style springs** (bounce pads that launch you much
+  higher than a normal jump) and **spike hazards** (instant life loss
+  on contact) are scattered through the levels alongside the existing
+  glitches, armored insects, gun pickup, and extra-life pickup.
 - if your wallet has no gas, a **faucet button** appears after
   connecting, linking straight to the Circle faucet for Arc Testnet
 - your **all-time best score** is read from an on-chain scoreboard and
@@ -59,10 +70,9 @@ sets up; the connect step here uses a plain signature instead, which
 gets you the "no gas to connect" result without needing that
 infrastructure.
 
-Heads up on UX: starting a run and every life lost each ask for a
-wallet signature *and* pay gas, so a rough run can mean several
-paid prompts in a row. That's by design here, but worth knowing before
-you hand this to playtesters.
+Heads up on UX: only starting/retrying a game asks for a wallet
+signature and gas — losing a life is instant and free, so a rough run
+never means a wall of signature prompts.
 
 No build step, no npm install — it's plain HTML/CSS/JS. Open
 `index.html` in any browser, or host it (GitHub Pages / Vercel, see

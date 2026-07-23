@@ -29,45 +29,37 @@
     overflow:hidden;
     -webkit-user-select:none; user-select:none;
   }
-  body{
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    min-height:100vh;
-    padding:
-      max(8px, env(safe-area-inset-top))
-      max(8px, env(safe-area-inset-right))
-      max(8px, env(safe-area-inset-bottom))
-      max(8px, env(safe-area-inset-left));
-  }
-  @supports (height: 100svh){
-    body{ min-height:100svh; }
-  }
-  #stage-wrap{
-    display:flex; flex-direction:column; align-items:center;
-    width:100%; max-width:960px;
-  }
+  body{ position:fixed; inset:0; width:100%; height:100%; }
+  #stage-wrap{ position:fixed; inset:0; }
   #stage{
-    position:relative;
+    position:absolute; inset:0;
+    width:100%; height:100%;
     container-type:inline-size;
     container-name:stagebox;
-    width:min(960px, 96vw);
-    aspect-ratio:16/10;
     background:linear-gradient(var(--sky-top),var(--sky-bottom));
-    border:4px solid var(--panel-edge);
-    border-radius:10px;
     overflow:hidden;
-    box-shadow:0 12px 0 var(--panel-edge), 0 14px 24px rgba(0,0,0,.5);
-  }
-  @supports (height: 100svh){
-    #stage{ width:min(960px, 96vw, calc((100svh - 64px) * 1.6)); }
   }
   canvas{ display:block; width:100%; height:100%; image-rendering:pixelated; }
+
+  #rotateHint{
+    position:absolute; top:0; left:0; right:0; z-index:30;
+    display:none; align-items:center; justify-content:space-between; gap:8px;
+    background:rgba(10,11,26,.92); color:var(--paper);
+    padding:8px calc(10px + env(safe-area-inset-right)) 8px calc(10px + env(safe-area-inset-left));
+    padding-top:calc(8px + env(safe-area-inset-top));
+    font-size:11px;
+  }
+  #rotateHint button{ background:none; border:none; color:var(--gold); font-size:16px; cursor:pointer; padding:0 4px; }
+  @media (orientation:portrait) and (max-width:820px){
+    #rotateHint.show{ display:flex; }
+  }
 
   .pixel-font{ font-family:'Press Start 2P',monospace; letter-spacing:0.5px; }
 
   #hud{
     position:absolute; top:0; left:0; right:0;
     display:flex; justify-content:space-between; align-items:center;
-    padding:clamp(6px,2.2cqw,10px) clamp(8px,2.8cqw,14px);
+    padding:calc(clamp(6px,2.2cqw,10px) + env(safe-area-inset-top)) calc(clamp(8px,2.8cqw,14px) + env(safe-area-inset-right)) clamp(6px,2.2cqw,10px) calc(clamp(8px,2.8cqw,14px) + env(safe-area-inset-left));
     font-size:clamp(8px,2.1cqw,10px);
     text-shadow:2px 2px 0 rgba(0,0,0,.55);
   }
@@ -164,7 +156,8 @@
   #touch{
     position:absolute; left:0; right:0; bottom:0;
     display:flex; justify-content:space-between;
-    padding:clamp(8px,3cqw,14px); pointer-events:none;
+    padding:clamp(8px,3cqw,14px) calc(clamp(8px,3cqw,14px) + env(safe-area-inset-right)) calc(clamp(8px,3cqw,14px) + env(safe-area-inset-bottom)) calc(clamp(8px,3cqw,14px) + env(safe-area-inset-left));
+    pointer-events:none;
   }
   #touch .pad{ display:flex; gap:clamp(6px,2.5cqw,10px); pointer-events:auto; }
   #touch button{
@@ -181,8 +174,10 @@
   @media (hover:hover) and (pointer:fine){ #touch{ display:none; } }
 
   footer{
-    max-width:960px; width:100%; margin:8px auto 0; text-align:center;
-    font-size:clamp(8px,2.4vw,11px); color:#7d8099; padding:0 8px;
+    position:absolute; left:0; right:0; bottom:2px; z-index:1;
+    text-align:center; pointer-events:none;
+    font-size:clamp(7px,1.8cqw,10px); color:rgba(125,128,153,.85); padding:0 8px;
+    text-shadow:1px 1px 0 rgba(0,0,0,.4);
   }
   @media (max-height:560px){ footer{ display:none; } }
 </style>
@@ -193,11 +188,17 @@
 <div id="stage">
   <canvas id="game" width="960" height="600"></canvas>
 
+  <div id="rotateHint">
+    <span>📱 Rotate to landscape for the best view</span>
+    <button id="rotateHintClose" aria-label="Dismiss">✕</button>
+  </div>
+
   <div id="hud" class="pixel-font">
     <div class="row">
       <span><span class="coin-dot">●</span> <span id="coinCount">0</span></span>
       <span><span class="life-dot">♥</span> <span id="lifeCount">3</span></span>
       <span><span class="gun-dot" id="gunIcon" style="display:none;">◆</span></span>
+      <span class="best" id="levelHud">LEVEL 1/4 · Countryside</span>
     </div>
     <div class="row">
       <span class="best">BEST <b id="hudBest">–</b></span>
@@ -247,6 +248,16 @@
       <div class="spinner"></div>
       <h2 class="pixel-font" id="chainOverlayTitle">Confirm in your wallet…</h2>
       <p id="chainOverlayText" style="margin:0;">Waiting for Arc Testnet confirmation.</p>
+    </div>
+  </div>
+
+  <!-- Between-level transition — no transaction, same paid run continues -->
+  <div id="levelTransitionScreen" class="overlay hidden">
+    <div class="card">
+      <h1 class="pixel-font" id="levelTransitionTitle">LEVEL CLEARED!</h1>
+      <p id="levelTransitionNext" style="margin-bottom:4px;">Next up: …</p>
+      <div class="stat">Score so far: <b id="levelTransitionScore">0</b></div>
+      <button class="pixel-btn secondary" id="continueLevelBtn">▶ CONTINUE</button>
     </div>
   </div>
 
@@ -304,12 +315,19 @@
   "use strict";
 
   // ---------------------------------------------------------------
-  // Level map. '#' ground, 'B' brick platform, 'C' coin, 'G' small
+  // Levels. '#' ground, 'B' brick platform, 'C' coin, 'G' small
   // glitch enemy, 'I' armored insect (takes 3 hits), 'U' gun pickup,
-  // 'L' extra-life pickup, 'P' player spawn, 'F' flag/beacon.
-  // Each char = one 32px tile. Rows: 15, top to bottom.
+  // 'L' extra-life pickup, 'S' spring (Bounce-Tales-style launch
+  // pad), 'V' spike hazard, 'P' player spawn, 'F' flag/beacon.
+  // Each char = one 32px tile, 15 rows top to bottom. Each level has
+  // its own terrain silhouette and color theme (Hill Climb
+  // Racing-style environment changes).
   // ---------------------------------------------------------------
-  const MAP = [
+  const LEVELS = [
+    {
+      name: 'Countryside',
+      theme: { skyTop:'#8fd3ff', skyBottom:'#c9ecff', hill:'#a9dfae', ground:'#8c5a2f', groundTop:'#6a8f3f', brick:'#b5651d', brickEdge:'#7a3f10' },
+      map: [
 "..........................................................................................",
 "..........................................................................................",
 "..........................................................................................",
@@ -325,31 +343,101 @@
 "##################...XXXXXXXXXXXX#############.......########..............#############",
 "##################...XXXXXXXXXXXX#############.......########..............#############",
 "##################...XXXXXXXXXXXX#############.......########..............#############",
+      ]
+    },
+    {
+      name: 'Sun-Scorched Desert',
+      theme: { skyTop:'#ffb35c', skyBottom:'#ffe0a8', hill:'#e0a95c', ground:'#c98d3a', groundTop:'#e0c060', brick:'#b5651d', brickEdge:'#7a3f10' },
+      map: [
+"..........................................................................................",
+"..........................................................................................",
+"..........................................................................................",
+"..................C.........................S.........................C..................",
+"................BBBBB.....................BBBBB.......................BBBBB..............",
+"..........................................................................................",
+"..V..V......G..........U.......V..V..V................G.......I..........V..V............",
+"#####...........BBBBBB......########..........BBBB........BBBBBBBB.......########........",
+"..........................................................................................",
+"P..C..S......C........I......C.......G....C.......I....C........G......C........S......F..",
+"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
+"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
+"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
+"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
+"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
+      ]
+    },
+    {
+      name: 'Frostbyte Peaks',
+      theme: { skyTop:'#cfe8ff', skyBottom:'#eef7ff', hill:'#e8f3ff', ground:'#5c7a94', groundTop:'#eaf6ff', brick:'#7fa8c9', brickEdge:'#3f5c73' },
+      map: [
+"..........................................................................................",
+"..........................................................................................",
+"...................C..................................C..................................",
+".................BBBBB..............................BBBBB................................",
+"..........................................................................................",
+"........S.................I.......G............S..............I..................G.......",
+"BBBB..........BBBBBBBB..........BBBBBBB....................BBBBBBBB..........BBBBB.......",
+"..........................................................................................",
+"P....C....V..V....C........G......C.........V..V..V.......C.........I.........C........F..",
+"#######.........#############...................############............BBBBB###########",
+"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
+"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
+"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
+"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
+"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
+      ]
+    },
+    {
+      name: 'Deep Cavern',
+      theme: { skyTop:'#241b3a', skyBottom:'#3d2b5c', hill:'#2f2249', ground:'#443261', groundTop:'#6b4fa0', brick:'#5c3f8c', brickEdge:'#2e1f4a' },
+      map: [
+"..........................................................................................",
+"..........................................................................................",
+"................C.....................................C..................................",
+"..............BBBBB.....S............................BBBBB......S........................",
+"..........................................................................................",
+"....G.......................I..........G..........I.............I..............G.........",
+"BBBBBBBB..........BBBBBB..........BBBBBBBB....................BBBBBBBB....................",
+"..........................................................................................",
+"P..C....V..V..V....C............C........V..V..V..V........C..............C............F..",
+"######........############.............################........BBBBBBBBB################",
+"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
+"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
+"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
+"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
+"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
+      ]
+    }
   ];
 
   const TILE = 32;
-  const ROWS = MAP.length;
-  const COLS = MAP[0].length;
-  const LEVEL_W = COLS * TILE;
-  const LEVEL_H = ROWS * TILE;
   const GRAVITY = 1500;
   const MOVE_SPEED = 220;
   const JUMP_VEL = -620;
+  const SPRING_VEL = -980;
   const BULLET_SPEED = 560;
   const SHOOT_COOLDOWN = 0.32;
 
+  let currentLevel = 0;
+  let ROWS = 0, COLS = 0, LEVEL_W = 0, LEVEL_H = 0;
   let solids = [];
   let coins = [];
   let enemies = [];
   let powerups = [];
+  let springs = [];
+  let spikes = [];
   let flag = null;
   let playerSpawn = {x:64,y:64};
 
-  function parseMap(){
-    solids = []; coins = []; enemies = []; powerups = [];
+  function parseLevel(levelIndex){
+    const level = LEVELS[levelIndex];
+    const map = level.map;
+    ROWS = map.length; COLS = map[0].length;
+    LEVEL_W = COLS*TILE; LEVEL_H = ROWS*TILE;
+    solids = []; coins = []; enemies = []; powerups = []; springs = []; spikes = [];
     for(let r=0;r<ROWS;r++){
       for(let c=0;c<COLS;c++){
-        const ch = MAP[r][c];
+        const ch = map[r][c];
         const x = c*TILE, y = r*TILE;
         if(ch === '#' || ch === 'B'){
           solids.push({x,y,w:TILE,h:TILE, brick: ch==='B'});
@@ -363,6 +451,10 @@
           powerups.push({x:x+4,y:y+4,w:24,h:24,type:'gun',taken:false});
         } else if(ch === 'L'){
           powerups.push({x:x+4,y:y+4,w:24,h:24,type:'life',taken:false});
+        } else if(ch === 'S'){
+          springs.push({x,y:y+TILE-10,w:TILE,h:10});
+        } else if(ch === 'V'){
+          spikes.push({x:x+4,y:y+TILE-12,w:TILE-8,h:12});
         } else if(ch === 'P'){
           playerSpawn = {x, y:y-TILE};
         } else if(ch === 'F'){
@@ -371,11 +463,54 @@
       }
     }
   }
-  parseMap();
+
+  function loadLevel(index){
+    currentLevel = index;
+    parseLevel(index);
+    player.x = playerSpawn.x; player.y = playerSpawn.y;
+    player.vx = 0; player.vy = 0; player.invuln = 1;
+    bullets = [];
+    camX = 0;
+  }
 
   const canvas = document.getElementById('game');
   const ctx2d = canvas.getContext('2d');
   let camX = 0;
+
+  // ---------------------------------------------------------------
+  // Canvas fills whatever space CSS gives it (the whole viewport —
+  // see #stage CSS). viewW/viewH are the LOGICAL (CSS pixel) game
+  // coordinates the camera/physics use; the actual pixel buffer is
+  // scaled up by devicePixelRatio for a crisp image, via setTransform,
+  // so nothing in the game logic needs to know about DPR.
+  // ---------------------------------------------------------------
+  let viewW = 960, viewH = 600;
+  function resizeCanvas(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = canvas.getBoundingClientRect();
+    viewW = Math.max(1, rect.width);
+    viewH = Math.max(1, rect.height);
+    canvas.width = Math.round(viewW * dpr);
+    canvas.height = Math.round(viewH * dpr);
+    ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', resizeCanvas);
+  resizeCanvas();
+
+  let rotateHintDismissed = false;
+  function updateRotateHint(){
+    const el = document.getElementById('rotateHint');
+    const isPortrait = window.innerHeight > window.innerWidth;
+    el.classList.toggle('show', isPortrait && !rotateHintDismissed);
+  }
+  document.getElementById('rotateHintClose').addEventListener('click', ()=>{
+    rotateHintDismissed = true;
+    updateRotateHint();
+  });
+  window.addEventListener('resize', updateRotateHint);
+  window.addEventListener('orientationchange', updateRotateHint);
+  updateRotateHint();
 
   function freshPlayer(){
     return { x:playerSpawn.x, y:playerSpawn.y, w:26, h:30, vx:0, vy:0, onGround:false, facing:1, invuln:0, hasGun:false, shootCd:0 };
@@ -389,7 +524,6 @@
   let elapsed = 0;
   let running = false;
   let won = false;
-  let awaitingChainTx = false;
 
   const keys = { left:false, right:false, jump:false, shoot:false };
 
@@ -476,6 +610,7 @@
     stomp:  ()=> tone(180,0.12,'square',0.14),
     kill:   ()=> { tone(320,0.07,'square',0.13); tone(160,0.12,'square',0.1,0.06); },
     hurt:   ()=> tone(140,0.28,'sawtooth',0.18),
+    spring: ()=> { tone(300,0.06,'sine',0.14); tone(700,0.1,'sine',0.14,0.05); },
     gun:    ()=> [660,880,1100].forEach((f,i)=>tone(f,0.09,'square',0.12,i*0.08)),
     life:   ()=> [523,659,784,1046].forEach((f,i)=>tone(f,0.1,'triangle',0.12,i*0.08)),
     win:    ()=> [523,659,784,1046,784,1046].forEach((f,i)=>tone(f,0.16,'square',0.13,i*0.13)),
@@ -572,6 +707,23 @@
       }
     }
 
+    // Springs — Bounce-Tales-style launch pads: land on one and get
+    // flung much higher than a normal jump.
+    for(const sp of springs){
+      if(player.vy > 0 && aabb(player, sp)){
+        player.vy = SPRING_VEL;
+        player.y = sp.y - player.h;
+        sfx.spring();
+      }
+    }
+
+    // Spikes — static hazard, costs a life on contact.
+    for(const sk of spikes){
+      if(player.invuln <= 0 && aabb(player, sk)){
+        requestLifeLoss();
+      }
+    }
+
     for(const b of bullets){ b.x += b.vx*dt; b.life -= dt; }
     bullets = bullets.filter(b => b.life > 0);
     for(const b of bullets){
@@ -607,10 +759,14 @@
     }
 
     if(flag && !won && player.x + player.w > flag.x){
-      completeLevel();
+      if(currentLevel < LEVELS.length - 1){
+        advanceLevel();
+      } else {
+        completeLevel();
+      }
     }
 
-    camX = Math.max(0, Math.min(player.x - 300, LEVEL_W - canvas.width));
+    camX = Math.max(0, Math.min(player.x - 300, LEVEL_W - viewW));
 
     updateHud();
     render();
@@ -618,40 +774,13 @@
   }
 
   // ---------------------------------------------------------------
-  // Life loss now signs an on-chain transaction (recordLifeLost) on
-  // Arc Testnet before the loss is actually applied. Game pauses
-  // during the signature/confirmation.
+  // Life loss is instant and local — no per-life transaction. The
+  // only on-chain signature for a run is the entry fee paid once at
+  // the start (see beginRun). 3 lives = 1 paid game.
   // ---------------------------------------------------------------
   function requestLifeLoss(){
-    if(awaitingChainTx || player.invuln > 0) return;
-    awaitingChainTx = true;
-    running = false;
+    if(player.invuln > 0) return;
     sfx.hurt();
-    showChainOverlay('Life lost — confirm in wallet…', 'Signing a small transaction on Arc Testnet for this loss.');
-    recordLifeLossOnChain().finally(()=>{
-      hideChainOverlay();
-      awaitingChainTx = false;
-      applyLifeLoss();
-    });
-  }
-
-  async function recordLifeLossOnChain(){
-    if(!walletAddress || !ethersProvider) return;
-    try{
-      await ensureArcNetwork(rawProvider);
-      const signer = await ethersProvider.getSigner();
-      sfx.txGo();
-      const tx = await signOnChainAction(signer, c => c.recordLifeLost());
-      await tx.wait();
-      sfx.txOk();
-      refreshBalance();
-    }catch(err){
-      console.warn('Life-loss transaction skipped/failed:', err);
-      sfx.txFail();
-    }
-  }
-
-  function applyLifeLoss(){
     lives--;
     player.invuln = 1.5;
     if(lives <= 0){
@@ -660,7 +789,19 @@
       return;
     }
     player.x = playerSpawn.x; player.y = playerSpawn.y; player.vx=0; player.vy=0;
-    running = true;
+  }
+
+  function advanceLevel(){
+    running = false;
+    sfx.win();
+    const clearedName = LEVELS[currentLevel].name;
+    loadLevel(currentLevel + 1);
+    const nextName = LEVELS[currentLevel].name;
+    updateLevelHud();
+    document.getElementById('levelTransitionTitle').textContent = `${clearedName.toUpperCase()} CLEARED!`;
+    document.getElementById('levelTransitionNext').textContent = `Next up: ${nextName}`;
+    document.getElementById('levelTransitionScore').textContent = score;
+    document.getElementById('levelTransitionScreen').classList.remove('hidden');
   }
 
   function completeLevel(){
@@ -701,6 +842,10 @@
     document.getElementById('hudBest').textContent = walletAddress ? Math.max(bestScore, score) : '–';
   }
 
+  function updateLevelHud(){
+    document.getElementById('levelHud').textContent = `LEVEL ${currentLevel+1}/${LEVELS.length} · ${LEVELS[currentLevel].name}`;
+  }
+
   function showChainOverlay(title, text){
     document.getElementById('chainOverlayTitle').textContent = title;
     document.getElementById('chainOverlayText').textContent = text;
@@ -714,9 +859,16 @@
   // Rendering — everything hand-drawn with primitives, no image assets
   // ---------------------------------------------------------------
   function render(){
-    ctx2d.clearRect(0,0,canvas.width,canvas.height);
+    const theme = LEVELS[currentLevel] ? LEVELS[currentLevel].theme : LEVELS[0].theme;
+    ctx2d.clearRect(0,0,viewW,viewH);
 
-    ctx2d.fillStyle = '#a9dfae';
+    const skyGrad = ctx2d.createLinearGradient(0,0,0,viewH);
+    skyGrad.addColorStop(0, theme.skyTop);
+    skyGrad.addColorStop(1, theme.skyBottom);
+    ctx2d.fillStyle = skyGrad;
+    ctx2d.fillRect(0,0,viewW,viewH);
+
+    ctx2d.fillStyle = theme.hill;
     for(let i=0;i<6;i++){
       const hx = (i*300 - camX*0.3) % 1800 - 200;
       ctx2d.beginPath(); ctx2d.ellipse(hx, 470, 160, 90, 0, 0, Math.PI*2); ctx2d.fill();
@@ -736,12 +888,42 @@
 
     for(const s of solids){
       if(s.brick){
-        ctx2d.fillStyle = '#b5651d'; ctx2d.fillRect(s.x,s.y,s.w,s.h);
-        ctx2d.strokeStyle = '#7a3f10'; ctx2d.lineWidth = 2; ctx2d.strokeRect(s.x+1,s.y+1,s.w-2,s.h-2);
+        ctx2d.fillStyle = theme.brick; ctx2d.fillRect(s.x,s.y,s.w,s.h);
+        ctx2d.strokeStyle = theme.brickEdge; ctx2d.lineWidth = 2; ctx2d.strokeRect(s.x+1,s.y+1,s.w-2,s.h-2);
       } else {
-        ctx2d.fillStyle = '#6a8f3f'; ctx2d.fillRect(s.x,s.y,s.w,6);
-        ctx2d.fillStyle = '#8c5a2f'; ctx2d.fillRect(s.x,s.y+6,s.w,s.h-6);
+        ctx2d.fillStyle = theme.groundTop; ctx2d.fillRect(s.x,s.y,s.w,6);
+        ctx2d.fillStyle = theme.ground; ctx2d.fillRect(s.x,s.y+6,s.w,s.h-6);
       }
+    }
+
+    for(const sp of springs){
+      ctx2d.save();
+      ctx2d.translate(sp.x + sp.w/2, sp.y + sp.h);
+      ctx2d.fillStyle = '#ff8a3d';
+      ctx2d.fillRect(-sp.w/2+4, -sp.h, sp.w-8, sp.h);
+      ctx2d.strokeStyle = '#a8461a'; ctx2d.lineWidth = 2;
+      for(let i=0;i<3;i++){
+        ctx2d.beginPath();
+        ctx2d.moveTo(-sp.w/2+4, -2-i*3); ctx2d.lineTo(sp.w/2-4, -2-i*3);
+        ctx2d.stroke();
+      }
+      ctx2d.restore();
+    }
+
+    for(const sk of spikes){
+      ctx2d.save();
+      ctx2d.fillStyle = '#d7263d';
+      ctx2d.strokeStyle = '#7a0f1c'; ctx2d.lineWidth = 1.5;
+      const n = 3, w = sk.w/n;
+      for(let i=0;i<n;i++){
+        ctx2d.beginPath();
+        ctx2d.moveTo(sk.x+i*w, sk.y+sk.h);
+        ctx2d.lineTo(sk.x+i*w+w/2, sk.y);
+        ctx2d.lineTo(sk.x+i*w+w, sk.y+sk.h);
+        ctx2d.closePath();
+        ctx2d.fill(); ctx2d.stroke();
+      }
+      ctx2d.restore();
     }
 
     const bob = Math.sin(elapsed*6);
@@ -1169,14 +1351,17 @@
   }
 
   function resetGame(){
-    parseMap();
+    currentLevel = 0;
+    parseLevel(0);
     player = freshPlayer();
     bullets = [];
     coinsCollected = 0; score = 0; lives = 3; elapsed = 0; won = false;
+    camX = 0;
     document.getElementById('mintStatus').textContent = '';
     document.getElementById('mintBtn').disabled = false;
     document.getElementById('mintBtn').textContent = '⛓ MINT BADGE ON ARC TESTNET';
     resetSaveButtons();
+    updateLevelHud();
   }
 
   document.getElementById('startBtn').addEventListener('click', ()=> beginRun('startScreen'));
@@ -1187,6 +1372,10 @@
   document.getElementById('playAgainBtn').addEventListener('click', ()=>{
     document.getElementById('winScreen').classList.add('hidden');
     beginRun('winScreen');
+  });
+  document.getElementById('continueLevelBtn').addEventListener('click', ()=>{
+    document.getElementById('levelTransitionScreen').classList.add('hidden');
+    running = true;
   });
 
   // ---------------------------------------------------------------
