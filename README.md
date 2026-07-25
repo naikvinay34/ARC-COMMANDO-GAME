@@ -1,5 +1,18 @@
 # Arc Commando — a wallet-linked Arc Testnet platformer
 
+**Latest update:** fixed two real bugs that made levels effectively
+unclearable — the camera's forward-visibility didn't scale with
+screen size (very little warning before gaps/enemies on phones), and
+springs never actually launched the player (an execution-order bug).
+Also: the character is now the ArcMan mascot (animated procedurally —
+legs/shoes swing while running and tuck up mid-jump, plus a ground
+shadow that shrinks with jump height), coins are now a blue/white
+"$"-coin evocative of USDC instead of a plain gold ellipse, and
+there's a landscape/fullscreen button for mobile (⛶ icon in the HUD
+— note real orientation *lock* only works on Android Chrome-family
+browsers; iOS Safari doesn't expose that API, so there it just goes
+fullscreen).
+
 A browser-playable, original 2D platformer (own character "Commando",
 own art — not Nintendo's Mario) built for **Arc Testnet** (Circle's
 stablecoin-native L1, chain ID `5042002`). Connect any EVM wallet and:
@@ -82,6 +95,7 @@ below).
 
 ```
 index.html                          # the game: canvas, physics, controls, wallet + mint UI
+assets/character-body.png           # player character sprite (head/torso/arms) — legs are drawn procedurally for the running animation
 config.js                           # Arc Testnet params, contract addresses, WalletConnect Project ID
 contracts/LevelCompleteBadge.sol    # minimal ERC-721 badge contract, no imports
 contracts/ArcCommandoScoreboard.sol # on-chain best-score-per-wallet contract, no imports
@@ -100,7 +114,16 @@ README.md                           # this file
 - **◆ Gun pickup**: lets you shoot forward with X (desktop) or the 🔫
   button (mobile) — a short cooldown between shots
 - **♥ Extra-life pickup**: +1 life, up to 9
+- **Springs** launch you much higher than a normal jump — Bounce-Tales
+  style. **Spikes** cost a life on contact — jump over them.
 - Reach the beacon (flag) to complete the level
+
+Every level's pit gaps are capped at 3 tiles wide, which is safely
+inside the character's maximum jump range (~5.6 tiles at full run
+speed) — the maps are generated and validated by a script (checks
+pit width, row-length consistency, and that spawn/flag both sit on
+solid ground) rather than hand-typed ASCII art, specifically so a
+level can never accidentally contain an uncrossable gap.
 
 ## 1. Get a WalletConnect Project ID (required for the WalletConnect button)
 

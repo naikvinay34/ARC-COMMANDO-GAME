@@ -69,11 +69,13 @@
   #hud .gun-dot{ color:#8fe9ff; }
   #hud .best{ color:#c9cbe0; font-size:clamp(7px,1.9cqw,9px); }
   #hud .best b{ color:var(--gold); }
-  #soundBtn{
+  #soundBtn, #landscapeBtn{
     pointer-events:auto; cursor:pointer; background:rgba(13,15,34,.55);
     border:1px solid #383c63; border-radius:6px; color:var(--paper);
     font-size:clamp(11px,3cqw,13px); padding:clamp(3px,1cqw,4px) clamp(5px,1.6cqw,7px);
   }
+  #landscapeBtn{ display:none; }
+  @media (hover:none) and (pointer:coarse){ #landscapeBtn{ display:inline-block; } }
 
   .overlay{
     position:absolute; inset:0;
@@ -204,6 +206,7 @@
       <span class="best">BEST <b id="hudBest">–</b></span>
       <span>SCORE <span id="scoreCount">0</span></span>
       <button id="soundBtn" class="pixel-font" title="Toggle sound">🔊</button>
+      <button id="landscapeBtn" class="pixel-font" title="Fullscreen landscape mode">⛶</button>
     </div>
   </div>
 
@@ -331,18 +334,18 @@
 "..........................................................................................",
 "..........................................................................................",
 "..........................................................................................",
-"..........................C..........................C...................................",
-"........................BBBBB.....................BBBBBBB.......C........................",
-"..........................................C..........................C...................",
-"..C.......C..........G..........U....................G.............BBBBB.................",
-"BBBBB...BBBBB......BBBBBBBB...BBBBBB...........BBBB..........BBBBBB......................",
+"..........................C...........................C...................................",
+"........................BBBBB.......................BBBBB.................................",
 "..........................................................................................",
-"P.....C........G......L....C..........G....I...C..........G......I......C......I.......F..",
-"##################...............#############.......########..............BBBBBBB######",
-"##################...XXXXXXXXXXXX#############.......########..............#############",
-"##################...XXXXXXXXXXXX#############.......########..............#############",
-"##################...XXXXXXXXXXXX#############.......########..............#############",
-"##################...XXXXXXXXXXXX#############.......########..............#############",
+"..........................................................................................",
+"..........................................................................................",
+"..........................................................................................",
+"P.....C.C.C...G.....C.C.C.S.U.......C.C.I...G.L.......S.C.C...G.......C.C.I.......C.C.F...",
+"################..##############...###############..##############...#########..##########",
+"################..##############...###############..##############...#########..##########",
+"################..##############...###############..##############...#########..##########",
+"################..##############...###############..##############...#########..##########",
+"################..##############...###############..##############...#########..##########",
       ]
     },
     {
@@ -352,18 +355,18 @@
 "..........................................................................................",
 "..........................................................................................",
 "..........................................................................................",
-"..................C.........................S.........................C..................",
-"................BBBBB.....................BBBBB.......................BBBBB..............",
 "..........................................................................................",
-"..V..V......G..........U.......V..V..V................G.......I..........V..V............",
-"#####...........BBBBBB......########..........BBBB........BBBBBBBB.......########........",
+"...................C...........................C.................C........................",
+"..................BBBB........................BBBB..............BBBB......................",
 "..........................................................................................",
-"P..C..S......C........I......C.......G....C.......I....C........G......C........S......F..",
-"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
-"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
-"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
-"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
-"########...XXXXXXXXX#############...XXXXXXXXX##########...XXXXXXXXXXXX###################",
+"..........................................................................................",
+"..........................................................................................",
+"P...C.C.U..V.....S..S.C.LV.......G..C.I..V.....SS.C.I..V.....G..C.S..V......I...C.C...F...",
+"##############..############...#############..############...###########..################",
+"##############..############...#############..############...###########..################",
+"##############..############...#############..############...###########..################",
+"##############..############...#############..############...###########..################",
+"##############..############...#############..############...###########..################",
       ]
     },
     {
@@ -372,19 +375,19 @@
       map: [
 "..........................................................................................",
 "..........................................................................................",
-"...................C..................................C..................................",
-".................BBBBB..............................BBBBB................................",
 "..........................................................................................",
-"........S.................I.......G............S..............I..................G.......",
-"BBBB..........BBBBBBBB..........BBBBBBB....................BBBBBBBB..........BBBBB.......",
 "..........................................................................................",
-"P....C....V..V....C........G......C.........V..V..V.......C.........I.........C........F..",
-"#######.........#############...................############............BBBBB###########",
-"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
-"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
-"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
-"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
-"#######...XXXXXX#############...XXXXXXXXXXXXXX############...XXXXXXXXXXXX#################",
+".................C...........................C...........................C................",
+"................BBBB........................BBBB........................BBBB..............",
+"..........................................................................................",
+"..........................................................................................",
+"..........................................................................................",
+"P...C.U..V.......SS.C.CV.......G..C.LV.......SS.I.CV.......G..CICV.....S..S.CI........F...",
+"############...###########..############...###########..############...#########..########",
+"############...###########..############...###########..############...#########..########",
+"############...###########..############...###########..############...#########..########",
+"############...###########..############...###########..############...#########..########",
+"############...###########..############...###########..############...#########..########",
       ]
     },
     {
@@ -393,19 +396,19 @@
       map: [
 "..........................................................................................",
 "..........................................................................................",
-"................C.....................................C..................................",
-"..............BBBBB.....S............................BBBBB......S........................",
 "..........................................................................................",
-"....G.......................I..........G..........I.............I..............G.........",
-"BBBBBBBB..........BBBBBB..........BBBBBBBB....................BBBBBBBB....................",
 "..........................................................................................",
-"P..C....V..V..V....C............C........V..V..V..V........C..............C............F..",
-"######........############.............################........BBBBBBBBB################",
-"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
-"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
-"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
-"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
-"######...XXXXX############...XXXXXXXXXXXXX############...XXXXXXXXXXXXXXXX#################",
+"...............C.......................C.......................C..........................",
+"..............BBBB....................BBBB....................BBBB........................",
+"..........................................................................................",
+"..........................................................................................",
+"..........................................................................................",
+"P...C.UV.......SS.CI......G...CV.......SS.LVI.....G...CV.......SS.CV......G.C.I.......F...",
+"##########...#########..##########...#########..##########...#########..########..########",
+"##########...#########..##########...#########..##########...#########..########..########",
+"##########...#########..##########...#########..##########...#########..########..########",
+"##########...#########..##########...#########..##########...#########..########..########",
+"##########...#########..##########...#########..##########...#########..########..########",
       ]
     }
   ];
@@ -511,6 +514,16 @@
   window.addEventListener('resize', updateRotateHint);
   window.addEventListener('orientationchange', updateRotateHint);
   updateRotateHint();
+
+  // Player character sprite — the head/torso/arms come from a real
+  // image (assets/character-body.png); legs are drawn procedurally
+  // below it each frame so they can animate a running stride even
+  // though the source art was a static standing pose.
+  const charImg = new Image();
+  let charImgLoaded = false;
+  let charImgAspect = 1254/739;
+  charImg.onload = () => { charImgLoaded = true; charImgAspect = charImg.width / charImg.height; };
+  charImg.src = 'assets/character-body.png';
 
   function freshPlayer(){
     return { x:playerSpawn.x, y:playerSpawn.y, w:26, h:30, vx:0, vy:0, onGround:false, facing:1, invuln:0, hasGun:false, shootCd:0 };
@@ -666,6 +679,26 @@
     if(soundOn) actx();
   });
 
+  // Landscape mode for mobile — goes fullscreen and, where the browser
+  // allows it (mainly Android Chrome; iOS Safari does not support
+  // orientation lock at all), locks the screen to landscape. If the
+  // platform doesn't support it, this just goes fullscreen instead —
+  // still helps, and we don't pretend it rotated when it didn't.
+  document.getElementById('landscapeBtn').addEventListener('click', async ()=>{
+    try{
+      const stageEl = document.getElementById('stage-wrap');
+      if(!document.fullscreenElement && stageEl.requestFullscreen){
+        await stageEl.requestFullscreen();
+      }
+      if(screen.orientation && screen.orientation.lock){
+        try{ await screen.orientation.lock('landscape'); }
+        catch(lockErr){ console.warn('Orientation lock not permitted on this device/browser:', lockErr); }
+      }
+    }catch(err){
+      console.warn('Fullscreen/landscape request failed:', err);
+    }
+  });
+
   function killEnemy(en, bonus){
     en.alive = false;
     score += bonus;
@@ -691,6 +724,17 @@
     }
 
     player.vy += GRAVITY * dt;
+
+    // Springs — Bounce-Tales-style launch pads. Checked BEFORE ground
+    // collision resolves, otherwise the solid ground under the spring
+    // would zero out the bounce velocity the instant it's set.
+    for(const sp of springs){
+      if(player.vy > 0 && aabb(player, sp)){
+        player.vy = SPRING_VEL;
+        sfx.spring();
+      }
+    }
+
     resolveSolids(player);
     if(player.invuln > 0) player.invuln -= dt;
     if(player.y > LEVEL_H + 100) requestLifeLoss();
@@ -704,16 +748,6 @@
         pu.taken = true;
         if(pu.type === 'gun'){ player.hasGun = true; sfx.gun(); }
         else if(pu.type === 'life'){ lives = Math.min(lives+1, 9); sfx.life(); }
-      }
-    }
-
-    // Springs — Bounce-Tales-style launch pads: land on one and get
-    // flung much higher than a normal jump.
-    for(const sp of springs){
-      if(player.vy > 0 && aabb(player, sp)){
-        player.vy = SPRING_VEL;
-        player.y = sp.y - player.h;
-        sfx.spring();
       }
     }
 
@@ -766,7 +800,7 @@
       }
     }
 
-    camX = Math.max(0, Math.min(player.x - 300, LEVEL_W - viewW));
+    camX = Math.max(0, Math.min(player.x - viewW*0.32, LEVEL_W - viewW));
 
     updateHud();
     render();
@@ -931,9 +965,23 @@
       if(c.taken) continue;
       ctx2d.save();
       ctx2d.translate(c.x+8, c.y+8+bob*2);
-      ctx2d.fillStyle = '#ffd23f';
-      ctx2d.beginPath(); ctx2d.ellipse(0,0, Math.abs(Math.sin(elapsed*3))*7+3, 8, 0,0,Math.PI*2); ctx2d.fill();
-      ctx2d.strokeStyle = '#c98d00'; ctx2d.lineWidth=2; ctx2d.stroke();
+      const spin = Math.sin(elapsed*3);
+      const rx = Math.abs(spin)*8 + 3; // squashes to a sliver mid-spin, like a flipping coin
+      ctx2d.scale(spin < 0 ? -1 : 1, 1);
+      const coinGrad = ctx2d.createRadialGradient(-rx*0.3,-rx*0.3,1,0,0,rx+2);
+      coinGrad.addColorStop(0, '#5b8fef');
+      coinGrad.addColorStop(0.7, '#2775ca');
+      coinGrad.addColorStop(1, '#1a4f8a');
+      ctx2d.fillStyle = coinGrad;
+      ctx2d.beginPath(); ctx2d.ellipse(0,0, rx, 9, 0,0,Math.PI*2); ctx2d.fill();
+      ctx2d.strokeStyle = '#e8f1ff'; ctx2d.lineWidth = 1.3;
+      ctx2d.beginPath(); ctx2d.ellipse(0,0, rx*0.62, 5.6, 0,0,Math.PI*2); ctx2d.stroke();
+      if(rx > 5){
+        ctx2d.fillStyle = '#eaf3ff';
+        ctx2d.font = 'bold 9px sans-serif';
+        ctx2d.textAlign = 'center'; ctx2d.textBaseline = 'middle';
+        ctx2d.fillText('$', 0, 0.5);
+      }
       ctx2d.restore();
     }
 
@@ -1006,30 +1054,93 @@
       ctx2d.fill();
     }
 
+    // Ground shadow — anchored to the nearest solid below the player,
+    // shrinks/fades with height off the ground for a grounded 3D feel.
+    {
+      let shadowY = null;
+      for(const s of solids){
+        if(player.x + player.w > s.x && player.x < s.x + s.w && s.y >= player.y){
+          if(shadowY === null || s.y < shadowY) shadowY = s.y;
+        }
+      }
+      if(shadowY !== null){
+        const drop = Math.max(0, shadowY - (player.y + player.h));
+        const shrink = Math.max(0.35, 1 - drop/160);
+        ctx2d.save();
+        ctx2d.globalAlpha = 0.28 * shrink;
+        ctx2d.fillStyle = '#000';
+        ctx2d.beginPath();
+        ctx2d.ellipse(player.x + player.w/2, shadowY + 3, 14*shrink, 4.5*shrink, 0, 0, Math.PI*2);
+        ctx2d.fill();
+        ctx2d.restore();
+      }
+    }
+
     ctx2d.save();
     const flicker = player.invuln > 0 && Math.floor(elapsed*20)%2===0;
     if(!flicker){
       ctx2d.translate(player.x+player.w/2, player.y+player.h/2);
       ctx2d.scale(player.facing,1);
-      ctx2d.fillStyle = '#2ec4a6';
-      ctx2d.fillRect(-13,-15,26,26);
-      ctx2d.strokeStyle = '#166b5b'; ctx2d.lineWidth=2;
-      ctx2d.strokeRect(-13,-15,26,26);
-      ctx2d.fillStyle = '#0d0f22';
-      ctx2d.fillRect(-9,-9,18,8);
-      ctx2d.fillStyle = '#8fe9ff';
-      ctx2d.fillRect(0,-8,7,6);
-      ctx2d.strokeStyle = '#ff5470'; ctx2d.lineWidth=3;
-      ctx2d.beginPath(); ctx2d.moveTo(0,-15); ctx2d.lineTo(0,-22); ctx2d.stroke();
-      ctx2d.fillStyle = '#ff5470';
-      ctx2d.beginPath(); ctx2d.arc(0,-23,3,0,Math.PI*2); ctx2d.fill();
-      ctx2d.fillStyle = '#166b5b';
-      const legOffset = player.onGround && Math.abs(player.vx) > 5 ? Math.sin(elapsed*18)*4 : 0;
-      ctx2d.fillRect(-10,11+legOffset,8,6);
-      ctx2d.fillRect(2,11-legOffset,8,6);
+
+      const footY = player.h/2;         // ground line, local coords
+      const legH = 14, legW = 7;
+      const bodyW = 30, bodyH = bodyW / charImgAspect;
+      const bodyBottomY = footY - legH + 4; // slight overlap so legs tuck under the body
+      const bodyTopY = bodyBottomY - bodyH;
+
+      const running = player.onGround && Math.abs(player.vx) > 5;
+      const airborne = !player.onGround;
+      const phase = elapsed * 14;
+      let lift1, lift2, swing1, swing2;
+      if(airborne){
+        // Jump pose — both legs tuck up under the body, more so near
+        // the top of the arc, like a real jump rather than a static pose.
+        const tuck = Math.max(0, 1 - Math.abs(player.vy)/620) * 6 + 3;
+        lift1 = tuck; lift2 = tuck * 0.8;
+        swing1 = 2; swing2 = -1;
+      } else if(running){
+        lift1 = Math.max(0, Math.sin(phase)) * 5;
+        lift2 = Math.max(0, Math.sin(phase + Math.PI)) * 5;
+        swing1 = Math.sin(phase) * 4;
+        swing2 = Math.sin(phase + Math.PI) * 4;
+      } else {
+        lift1 = 0; lift2 = 0; swing1 = 0; swing2 = 0;
+      }
+
+      // Legs (drawn first, so the body slightly overlaps their tops)
+      ctx2d.fillStyle = '#141414';
+      ctx2d.strokeStyle = '#000000'; ctx2d.lineWidth = 1;
+      for(const [swing, lift] of [[swing1,lift1],[swing2,lift2]]){
+        const lx = swing - legW/2 - (swing<0?2:-2);
+        const ly = footY - legH - lift;
+        ctx2d.beginPath();
+        if(ctx2d.roundRect) ctx2d.roundRect(lx, ly, legW, legH, 3); else ctx2d.rect(lx, ly, legW, legH);
+        ctx2d.fill();
+      }
+      // Shoes
+      ctx2d.fillStyle = '#f4f1ea';
+      ctx2d.strokeStyle = '#c9c6bd'; ctx2d.lineWidth = 1;
+      for(const [swing, lift] of [[swing1,lift1],[swing2,lift2]]){
+        const lx = swing - legW/2 - (swing<0?2:-2);
+        const sy = footY - lift;
+        ctx2d.beginPath();
+        ctx2d.ellipse(lx+legW/2 + (player.facing>0?1:-1)*2, sy-2, 7, 4.5, 0, 0, Math.PI*2);
+        ctx2d.fill(); ctx2d.stroke();
+      }
+
+      // Body/head/arms — the real mascot artwork
+      if(charImgLoaded){
+        ctx2d.drawImage(charImg, -bodyW/2, bodyTopY, bodyW, bodyH);
+      } else {
+        ctx2d.fillStyle = '#f4f1ea';
+        ctx2d.beginPath();
+        if(ctx2d.roundRect) ctx2d.roundRect(-bodyW/2, bodyTopY, bodyW, bodyH, 6); else ctx2d.rect(-bodyW/2, bodyTopY, bodyW, bodyH);
+        ctx2d.fill();
+      }
+
       if(player.hasGun){
         ctx2d.fillStyle = '#8fe9ff';
-        ctx2d.fillRect(10,-2,12,5);
+        ctx2d.fillRect(bodyW/2-4, bodyTopY+bodyH*0.45, 12, 5);
       }
     }
     ctx2d.restore();
