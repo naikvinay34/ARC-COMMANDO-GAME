@@ -1,15 +1,17 @@
 # Arc Commando — a wallet-linked Arc Testnet platformer
 
-**Latest update:** added a boss fight at the end of every level — each
-one visually distinct (color/horns/eyes match its level's theme),
-with its own attack pattern, and gets tougher level over level
-(Meadow Brute → Sandstorm Djinn → Frost Titan → Shadow Wyrm). The
-flag won't activate until the boss is defeated. Also added a magnet
-power-up that pulls nearby $USDC coins toward you, replaced the HUD's
-generic "SCORE" with a `$USDC` counter showing coins collected, and
-put the ArcMan character image on the start screen under the title.
-Levels are ~20 tiles longer than before (the boss arena itself). See
-"Known simplifications" below for the honest limits of this pass.
+**Latest update:** the character image is now embedded directly in
+`index.html` as base64 — no separate `assets/character-body.png` file
+to lose or break via a bad relative path, which is almost certainly
+why it wasn't loading before (the image file likely didn't travel
+with the HTML when it was moved/deployed, or a hosting path issue
+broke it). The start screen is now staged instead of showing every
+wallet option at once: it opens with just the bigger centered ArcMan
+image, the title, and a single "Connect Wallet to Play" button;
+tapping that reveals the actual wallet list. After the first entry
+fee is paid, a 2-slide story intro plays (ArcMan introduces himself,
+then sends you off to collect $USDC) before the level actually
+starts — it only shows once per session, not on every retry.
 
 A browser-playable, original 2D platformer (own character "Commando",
 own art — not Nintendo's Mario) built for **Arc Testnet** (Circle's
@@ -92,8 +94,9 @@ below).
 ## Files
 
 ```
-index.html                          # the game: canvas, physics, controls, wallet + mint UI
-assets/character-body.png           # player character sprite (head/torso/arms) — legs are drawn procedurally for the running animation
+index.html                          # the game: canvas, physics, controls, wallet + mint UI —
+                                     #   character art is embedded as base64 inside this file,
+                                     #   no separate image file to keep track of or lose
 config.js                           # Arc Testnet params, contract addresses, WalletConnect Project ID
 contracts/LevelCompleteBadge.sol    # minimal ERC-721 badge contract, no imports
 contracts/ArcCommandoScoreboard.sol # on-chain best-score-per-wallet contract, no imports
