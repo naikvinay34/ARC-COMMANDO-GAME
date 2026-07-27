@@ -197,14 +197,14 @@
 
   <div id="hud" class="pixel-font">
     <div class="row">
-      <span><span class="coin-dot">●</span> <span id="coinCount">0</span></span>
       <span><span class="life-dot">♥</span> <span id="lifeCount">3</span></span>
       <span><span class="gun-dot" id="gunIcon" style="display:none;">◆</span></span>
+      <span><span class="gun-dot" id="magnetIcon" style="display:none; color:#e0384a;">☊</span></span>
       <span class="best" id="levelHud">LEVEL 1/4 · Countryside</span>
     </div>
     <div class="row">
       <span class="best">BEST <b id="hudBest">–</b></span>
-      <span>SCORE <span id="scoreCount">0</span></span>
+      <span class="coin-dot">$USDC <b id="usdcCount">0</b></span>
       <button id="soundBtn" class="pixel-font" title="Toggle sound">🔊</button>
       <button id="landscapeBtn" class="pixel-font" title="Fullscreen landscape mode">⛶</button>
     </div>
@@ -214,6 +214,7 @@
   <div id="startScreen" class="overlay">
     <div class="card">
       <h1 class="pixel-font">ARC COMMANDO</h1>
+      <img src="assets/character-body.png" alt="ArcMan" style="width:min(48%,150px); margin:4px auto 8px; display:block; filter:drop-shadow(0 6px 10px rgba(0,0,0,.4));" />
       <h2 class="pixel-font">a wallet-linked Arc Testnet platformer</h2>
 
       <div id="configWarning" class="mint-status hidden" style="color:#ff9b6a; margin-bottom:10px;"></div>
@@ -236,7 +237,7 @@
       </div>
 
       <div class="divider"></div>
-      <p>Guide Commando across the pipeline: grab data-coins, stomp or shoot glitches, pick up the ◆ gun to fight back, grab ♥ for an extra life, and take down the armored bugs before they let you pass. Reach the beacon to finish the level.</p>
+      <p>Guide Commando across the pipeline: grab $USDC coins (try the magnet ☊ pickup!), stomp or shoot glitches, pick up the ◆ gun to fight back, grab ♥ for an extra life, and take down the armored bugs. Each level ends in a boss fight — defeat it to unlock the beacon and move on.</p>
       <button class="pixel-btn" id="startBtn" disabled>🔒 CONNECT WALLET TO PLAY</button>
       <div id="start-hint">
         Desktop: ← → move · ↑/Space jump · X shoot (once armed)<br/>
@@ -281,7 +282,7 @@
   <div id="winScreen" class="overlay hidden">
     <div class="card">
       <h1 class="pixel-font">LEVEL COMPLETE</h1>
-      <div class="stat">Coins collected: <b id="winCoins">0</b></div>
+      <div class="stat">$USDC collected: <b id="winCoins">0</b></div>
       <div class="stat">Score: <b id="winScore">0</b></div>
       <div class="stat">All-time best: <b id="winBest">0</b></div>
 
@@ -330,87 +331,91 @@
     {
       name: 'Countryside',
       theme: { skyTop:'#8fd3ff', skyBottom:'#c9ecff', hill:'#a9dfae', ground:'#8c5a2f', groundTop:'#6a8f3f', brick:'#b5651d', brickEdge:'#7a3f10' },
+      boss: { name:'Meadow Brute', color:'#4a7a2e', accent:'#7fc44a', hp:5, pattern:'charge' },
       map: [
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"..........................C...........................C...................................",
-"........................BBBBB.......................BBBBB.................................",
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"P.....C.C.C...G.....C.C.C.S.U.......C.C.I...G.L.......S.C.C...G.......C.C.I.......C.C.F...",
-"################..##############...###############..##############...#########..##########",
-"################..##############...###############..##############...#########..##########",
-"################..##############...###############..##############...#########..##########",
-"################..##############...###############..##############...#########..##########",
-"################..##############...###############..##############...#########..##########",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..........................C...........................C.......................................................",
+"........................BBBBB.......................BBBBB.....................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"P.....C.C.C...G.....C.C.C.S.U.......C.C.I...G.L.......S.C.C...G.......C.C.I...M...C.C.C.......K........C.C...F",
+"################..##############...###############..##############...#########..##############################",
+"################..##############...###############..##############...#########..##############################",
+"################..##############...###############..##############...#########..##############################",
+"################..##############...###############..##############...#########..##############################",
+"################..##############...###############..##############...#########..##############################",
       ]
     },
     {
       name: 'Sun-Scorched Desert',
       theme: { skyTop:'#ffb35c', skyBottom:'#ffe0a8', hill:'#e0a95c', ground:'#c98d3a', groundTop:'#e0c060', brick:'#b5651d', brickEdge:'#7a3f10' },
+      boss: { name:'Sandstorm Djinn', color:'#c9711f', accent:'#ffcf7a', hp:6, pattern:'spread' },
       map: [
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"...................C...........................C.................C........................",
-"..................BBBB........................BBBB..............BBBB......................",
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"P...C.C.U..V.....S..S.C.LV.......G..C.I..V.....SS.C.I..V.....G..C.S..V......I...C.C...F...",
-"##############..############...#############..############...###########..################",
-"##############..############...#############..############...###########..################",
-"##############..############...#############..############...###########..################",
-"##############..############...#############..############...###########..################",
-"##############..############...#############..############...###########..################",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"...................C...........................C.................C............................................",
+"..................BBBB........................BBBB..............BBBB..........................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"P...C.C.U..V.....S..S.C.LV.......G..C.I..V.....SS.C.I..V.....G..C.S..V......I...C.C.M.C.......K........C.C...F",
+"##############..############...#############..############...###########..####################################",
+"##############..############...#############..############...###########..####################################",
+"##############..############...#############..############...###########..####################################",
+"##############..############...#############..############...###########..####################################",
+"##############..############...#############..############...###########..####################################",
       ]
     },
     {
       name: 'Frostbyte Peaks',
       theme: { skyTop:'#cfe8ff', skyBottom:'#eef7ff', hill:'#e8f3ff', ground:'#5c7a94', groundTop:'#eaf6ff', brick:'#7fa8c9', brickEdge:'#3f5c73' },
+      boss: { name:'Frost Titan', color:'#3f6f94', accent:'#bfe6ff', hp:7, pattern:'heavy' },
       map: [
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-".................C...........................C...........................C................",
-"................BBBB........................BBBB........................BBBB..............",
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"P...C.U..V.......SS.C.CV.......G..C.LV.......SS.I.CV.......G..CICV.....S..S.CI........F...",
-"############...###########..############...###########..############...#########..########",
-"############...###########..############...###########..############...#########..########",
-"############...###########..############...###########..############...#########..########",
-"############...###########..############...###########..############...#########..########",
-"############...###########..############...###########..############...#########..########",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+".................C...........................C...........................C....................................",
+"................BBBB........................BBBB........................BBBB..................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"P...C.U..V.......SS.C.CV.......G..C.LV.......SS.I.CV.......G..CICV.....S..S.CI....M...C.......K........C.C...F",
+"############...###########..############...###########..############...#########..############################",
+"############...###########..############...###########..############...#########..############################",
+"############...###########..############...###########..############...#########..############################",
+"############...###########..############...###########..############...#########..############################",
+"############...###########..############...###########..############...#########..############################",
       ]
     },
     {
       name: 'Deep Cavern',
       theme: { skyTop:'#241b3a', skyBottom:'#3d2b5c', hill:'#2f2249', ground:'#443261', groundTop:'#6b4fa0', brick:'#5c3f8c', brickEdge:'#2e1f4a' },
+      boss: { name:'Shadow Wyrm', color:'#4a1f7a', accent:'#c084fc', hp:9, pattern:'combo' },
       map: [
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"...............C.......................C.......................C..........................",
-"..............BBBB....................BBBB....................BBBB........................",
-"..........................................................................................",
-"..........................................................................................",
-"..........................................................................................",
-"P...C.UV.......SS.CI......G...CV.......SS.LVI.....G...CV.......SS.CV......G.C.I.......F...",
-"##########...#########..##########...#########..##########...#########..########..########",
-"##########...#########..##########...#########..##########...#########..########..########",
-"##########...#########..##########...#########..##########...#########..########..########",
-"##########...#########..##########...#########..##########...#########..########..########",
-"##########...#########..##########...#########..##########...#########..########..########",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"...............C.......................C.......................C..............................................",
+"..............BBBB....................BBBB....................BBBB............................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"..............................................................................................................",
+"P...C.UV.......SS.CI......G...CV.......SS.LVI.....G...CV.......SS.CV......G.C.I...M...C.......K........C.C...F",
+"##########...#########..##########...#########..##########...#########..########..############################",
+"##########...#########..##########...#########..##########...#########..########..############################",
+"##########...#########..##########...#########..##########...#########..########..############################",
+"##########...#########..##########...#########..##########...#########..########..############################",
+"##########...#########..##########...#########..##########...#########..########..############################",
       ]
-    }
+    },
   ];
 
   const TILE = 32;
@@ -431,6 +436,9 @@
   let spikes = [];
   let flag = null;
   let playerSpawn = {x:64,y:64};
+  let boss = null;
+  let bossProjectiles = [];
+  let bossSpawnPoint = {x:0,y:0};
 
   function parseLevel(levelIndex){
     const level = LEVELS[levelIndex];
@@ -438,6 +446,7 @@
     ROWS = map.length; COLS = map[0].length;
     LEVEL_W = COLS*TILE; LEVEL_H = ROWS*TILE;
     solids = []; coins = []; enemies = []; powerups = []; springs = []; spikes = [];
+    bossProjectiles = [];
     for(let r=0;r<ROWS;r++){
       for(let c=0;c<COLS;c++){
         const ch = map[r][c];
@@ -454,17 +463,30 @@
           powerups.push({x:x+4,y:y+4,w:24,h:24,type:'gun',taken:false});
         } else if(ch === 'L'){
           powerups.push({x:x+4,y:y+4,w:24,h:24,type:'life',taken:false});
+        } else if(ch === 'M'){
+          powerups.push({x:x+4,y:y+4,w:24,h:24,type:'magnet',taken:false});
         } else if(ch === 'S'){
           springs.push({x,y:y+TILE-10,w:TILE,h:10});
         } else if(ch === 'V'){
           spikes.push({x:x+4,y:y+TILE-12,w:TILE-8,h:12});
         } else if(ch === 'P'){
           playerSpawn = {x, y:y-TILE};
+        } else if(ch === 'K'){
+          bossSpawnPoint = {x, y:y-TILE*2};
         } else if(ch === 'F'){
           flag = {x, y:y-TILE*5, w:12, h:TILE*5};
         }
       }
     }
+    const def = level.boss;
+    boss = {
+      name: def.name, color: def.color, accent: def.accent, pattern: def.pattern,
+      hp: def.hp, maxHp: def.hp,
+      x: bossSpawnPoint.x, y: bossSpawnPoint.y, w: 64, h: 64,
+      startX: bossSpawnPoint.x, vx: 0, range: 160,
+      cooldown: 1.6, timer: 1.6, alive: true, defeated: false,
+      spawnedMinion: false, hitFlash: 0, phaseTimer: 0
+    };
   }
 
   function loadLevel(index){
@@ -526,7 +548,7 @@
   charImg.src = 'assets/character-body.png';
 
   function freshPlayer(){
-    return { x:playerSpawn.x, y:playerSpawn.y, w:26, h:30, vx:0, vy:0, onGround:false, facing:1, invuln:0, hasGun:false, shootCd:0 };
+    return { x:playerSpawn.x, y:playerSpawn.y, w:26, h:30, vx:0, vy:0, onGround:false, facing:1, invuln:0, hasGun:false, hasMagnet:false, shootCd:0 };
   }
   let player = freshPlayer();
   let bullets = [];
@@ -739,8 +761,19 @@
     if(player.invuln > 0) player.invuln -= dt;
     if(player.y > LEVEL_H + 100) requestLifeLoss();
 
+    // Magnet pulls nearby coins toward the player once picked up.
+    const MAGNET_RADIUS = 130, MAGNET_PULL = 340;
     for(const c of coins){
-      if(!c.taken && aabb(player,c)){ c.taken = true; coinsCollected++; score += 50; sfx.coin(); }
+      if(c.taken) continue;
+      if(player.hasMagnet){
+        const dx = (player.x+player.w/2) - c.x, dy = (player.y+player.h/2) - c.y;
+        const dist = Math.hypot(dx,dy);
+        if(dist < MAGNET_RADIUS && dist > 1){
+          c.x += (dx/dist) * MAGNET_PULL * dt;
+          c.y += (dy/dist) * MAGNET_PULL * dt;
+        }
+      }
+      if(aabb(player,c)){ c.taken = true; coinsCollected++; score += 50; sfx.coin(); }
     }
 
     for(const pu of powerups){
@@ -748,6 +781,7 @@
         pu.taken = true;
         if(pu.type === 'gun'){ player.hasGun = true; sfx.gun(); }
         else if(pu.type === 'life'){ lives = Math.min(lives+1, 9); sfx.life(); }
+        else if(pu.type === 'magnet'){ player.hasMagnet = true; sfx.gun(); }
       }
     }
 
@@ -771,6 +805,15 @@
           else sfx.stomp();
         }
       }
+      // Bullets vs boss
+      if(boss && boss.alive && b.life > 0){
+        const bb = {x:b.x-4,y:b.y-3,w:8,h:6};
+        if(aabb(bb,boss)){
+          boss.hp -= 1; boss.hitFlash = 0.15; b.life = 0;
+          sfx.stomp();
+          if(boss.hp <= 0) defeatBoss();
+        }
+      }
     }
     bullets = bullets.filter(b => b.life > 0);
 
@@ -792,11 +835,15 @@
       }
     }
 
+    updateBoss(dt);
+
     if(flag && !won && player.x + player.w > flag.x){
-      if(currentLevel < LEVELS.length - 1){
-        advanceLevel();
-      } else {
-        completeLevel();
+      if(!boss || boss.defeated){
+        if(currentLevel < LEVELS.length - 1){
+          advanceLevel();
+        } else {
+          completeLevel();
+        }
       }
     }
 
@@ -805,6 +852,89 @@
     updateHud();
     render();
     requestAnimationFrame(update);
+  }
+
+  // ---------------------------------------------------------------
+  // Boss fight — one per level, guarding the flag. Each has a
+  // distinct attack pattern and gets stronger level over level.
+  // ---------------------------------------------------------------
+  function defeatBoss(){
+    boss.alive = false;
+    boss.defeated = true;
+    bossProjectiles = [];
+    score += 500;
+    sfx.win();
+  }
+
+  function updateBoss(dt){
+    if(!boss || !boss.alive) return;
+    if(boss.hitFlash > 0) boss.hitFlash -= dt;
+    boss.phaseTimer += dt;
+
+    // Only active once the player is close enough to have reached the arena.
+    const engaged = Math.abs(player.x - boss.x) < 420;
+    if(engaged){
+      boss.x += boss.vx * dt;
+      if(boss.x < boss.startX - boss.range/2 || boss.x > boss.startX + boss.range/2) boss.vx *= -1;
+      if(boss.vx === 0) boss.vx = (player.x < boss.x ? -1 : 1) * 50;
+
+      boss.timer -= dt;
+      if(boss.timer <= 0){
+        boss.timer = boss.cooldown;
+        fireBossAttack();
+      }
+
+      if(boss.pattern === 'charge' && boss.phaseTimer % 3.2 < 1.1){
+        boss.vx = Math.sign(boss.vx || 1) * 140; // brief charge speed-up
+      }
+    }
+
+    // Contact damage
+    if(player.invuln <= 0 && aabb(player, boss)){
+      const stomping = player.vy > 0 && (player.y+player.h - boss.y) < 20;
+      if(stomping){
+        boss.hp -= 1; boss.hitFlash = 0.15; player.vy = JUMP_VEL*0.6;
+        sfx.stomp();
+        if(boss.hp <= 0) defeatBoss();
+      } else {
+        requestLifeLoss();
+      }
+    }
+
+    // Projectiles
+    for(const p of bossProjectiles){
+      p.x += p.vx*dt; p.y += (p.vy||0)*dt;
+      p.life -= dt;
+      if(player.invuln <= 0 && aabb(player, {x:p.x-p.r,y:p.y-p.r,w:p.r*2,h:p.r*2})){
+        p.life = 0;
+        requestLifeLoss();
+      }
+    }
+    bossProjectiles = bossProjectiles.filter(p => p.life > 0);
+
+    // Frost Titan summons one minion at half health.
+    if(boss.pattern === 'heavy' && !boss.spawnedMinion && boss.hp <= boss.maxHp/2){
+      boss.spawnedMinion = true;
+      enemies.push({type:'glitch', x:boss.x-80, y:boss.y+20, vx:60, startX:boss.x-80, range:90, alive:true, hp:1, w:28, h:28});
+    }
+  }
+
+  function fireBossAttack(){
+    const dir = player.x < boss.x ? -1 : 1;
+    const originX = boss.x + boss.w/2, originY = boss.y + boss.h*0.4;
+    if(boss.pattern === 'spread'){
+      for(const ang of [-0.25, 0, 0.25]){
+        bossProjectiles.push({ x:originX, y:originY, vx: dir*260*Math.cos(ang), vy: 260*Math.sin(ang), r:7, life:2.2, color:boss.accent });
+      }
+    } else if(boss.pattern === 'heavy'){
+      bossProjectiles.push({ x:originX, y:originY, vx: dir*180, vy:0, r:13, life:2.6, color:boss.accent });
+    } else if(boss.pattern === 'combo'){
+      bossProjectiles.push({ x:originX, y:originY, vx: dir*300, vy:-40, r:8, life:2, color:boss.accent });
+      bossProjectiles.push({ x:originX, y:originY, vx: dir*300, vy:40, r:8, life:2, color:boss.accent });
+    } else { // charge — a low fast projectile as a secondary threat
+      bossProjectiles.push({ x:originX, y:originY, vx: dir*220, vy:0, r:9, life:1.8, color:boss.accent });
+    }
+    sfx.shoot();
   }
 
   // ---------------------------------------------------------------
@@ -869,10 +999,10 @@
   }
 
   function updateHud(){
-    document.getElementById('coinCount').textContent = coinsCollected;
+    document.getElementById('usdcCount').textContent = coinsCollected;
     document.getElementById('lifeCount').textContent = Math.max(lives,0);
-    document.getElementById('scoreCount').textContent = score;
     document.getElementById('gunIcon').style.display = player.hasGun ? 'inline' : 'none';
+    document.getElementById('magnetIcon').style.display = player.hasMagnet ? 'inline' : 'none';
     document.getElementById('hudBest').textContent = walletAddress ? Math.max(bestScore, score) : '–';
   }
 
@@ -892,6 +1022,15 @@
   // ---------------------------------------------------------------
   // Rendering — everything hand-drawn with primitives, no image assets
   // ---------------------------------------------------------------
+  function lighten(hex, amt){ return shiftColor(hex, amt); }
+  function darken(hex, amt){ return shiftColor(hex, -amt); }
+  function shiftColor(hex, amt){
+    const n = parseInt(hex.slice(1), 16);
+    let r = (n >> 16) + amt, g = ((n >> 8) & 0xff) + amt, b = (n & 0xff) + amt;
+    r = Math.max(0, Math.min(255, r)); g = Math.max(0, Math.min(255, g)); b = Math.max(0, Math.min(255, b));
+    return '#' + ((1<<24) + (r<<16) + (g<<8) + b).toString(16).slice(1);
+  }
+
   function render(){
     const theme = LEVELS[currentLevel] ? LEVELS[currentLevel].theme : LEVELS[0].theme;
     ctx2d.clearRect(0,0,viewW,viewH);
@@ -993,6 +1132,13 @@
         ctx2d.fillStyle = '#8fe9ff';
         ctx2d.beginPath(); ctx2d.moveTo(-10,4); ctx2d.lineTo(10,4); ctx2d.lineTo(6,-6); ctx2d.lineTo(-10,-6); ctx2d.fill();
         ctx2d.fillStyle = '#0d0f22'; ctx2d.fillRect(-2,-10,4,6);
+      } else if(pu.type === 'magnet'){
+        ctx2d.strokeStyle = '#e0384a'; ctx2d.lineWidth = 5; ctx2d.lineCap = 'round';
+        ctx2d.beginPath(); ctx2d.arc(0, 2, 8, Math.PI*0.15, Math.PI*0.85); ctx2d.stroke();
+        ctx2d.fillStyle = '#e8e8e8';
+        ctx2d.fillRect(-10.5,-2,4,7); ctx2d.fillRect(6.5,-2,4,7);
+        ctx2d.fillStyle = '#8a2230';
+        ctx2d.fillRect(-10.5,3,4,3); ctx2d.fillRect(6.5,3,4,3);
       } else {
         ctx2d.fillStyle = '#ff5470';
         ctx2d.beginPath();
@@ -1043,10 +1189,85 @@
       ctx2d.beginPath(); ctx2d.ellipse(b.x,b.y,6,3,0,0,Math.PI*2); ctx2d.fill();
     }
 
+    // Boss
+    if(boss && boss.alive){
+      ctx2d.save();
+      const bx = boss.x + boss.w/2, by = boss.y + boss.h/2;
+      const bob = Math.sin(elapsed*3.2) * 4;
+      ctx2d.translate(bx, by + bob);
+      const flash = boss.hitFlash > 0;
+
+      // body — layered rounded shape with gradient shading for a
+      // "detailed" toy-like look, plus glowing eyes and horns/limbs
+      // that vary slightly by pattern to read as distinct creatures.
+      const grad = ctx2d.createRadialGradient(-14,-16,4, 0,0, boss.w*0.65);
+      grad.addColorStop(0, flash ? '#ffffff' : lighten(boss.color, 40));
+      grad.addColorStop(0.6, flash ? boss.accent : boss.color);
+      grad.addColorStop(1, darken(boss.color, 30));
+      ctx2d.fillStyle = grad;
+      ctx2d.beginPath();
+      ctx2d.ellipse(0, 0, boss.w*0.5, boss.h*0.46, 0, 0, Math.PI*2);
+      ctx2d.fill();
+      ctx2d.strokeStyle = darken(boss.color, 45); ctx2d.lineWidth = 3;
+      ctx2d.stroke();
+
+      // horns/spikes on top — silhouette varies by pattern
+      ctx2d.fillStyle = darken(boss.color, 20);
+      const hornCount = boss.pattern==='combo' ? 3 : boss.pattern==='heavy' ? 2 : 2;
+      for(let i=0;i<hornCount;i++){
+        const hx = (i-(hornCount-1)/2) * 14;
+        ctx2d.beginPath();
+        ctx2d.moveTo(hx-6, -boss.h*0.4);
+        ctx2d.lineTo(hx, -boss.h*0.7);
+        ctx2d.lineTo(hx+6, -boss.h*0.4);
+        ctx2d.fill();
+      }
+
+      // eyes
+      const eyeGlow = boss.accent;
+      ctx2d.fillStyle = eyeGlow;
+      ctx2d.shadowColor = eyeGlow; ctx2d.shadowBlur = 8;
+      ctx2d.beginPath(); ctx2d.ellipse(-10,-2,5,6,0,0,Math.PI*2); ctx2d.fill();
+      ctx2d.beginPath(); ctx2d.ellipse(10,-2,5,6,0,0,Math.PI*2); ctx2d.fill();
+      ctx2d.shadowBlur = 0;
+      ctx2d.fillStyle = '#1b1f3b';
+      ctx2d.beginPath(); ctx2d.ellipse(-10,-1,2,2.6,0,0,Math.PI*2); ctx2d.fill();
+      ctx2d.beginPath(); ctx2d.ellipse(10,-1,2,2.6,0,0,Math.PI*2); ctx2d.fill();
+
+      // mouth
+      ctx2d.strokeStyle = darken(boss.color, 50); ctx2d.lineWidth = 2.5;
+      ctx2d.beginPath(); ctx2d.arc(0, 12, 12, 0.15*Math.PI, 0.85*Math.PI); ctx2d.stroke();
+
+      ctx2d.restore();
+
+      // health bar above boss
+      const barW = 70, barX = bx - barW/2, barY = boss.y - 18 + bob;
+      ctx2d.fillStyle = 'rgba(13,15,34,.75)';
+      ctx2d.fillRect(barX-2, barY-2, barW+4, 9);
+      ctx2d.fillStyle = '#3a3f66';
+      ctx2d.fillRect(barX, barY, barW, 5);
+      ctx2d.fillStyle = boss.accent;
+      ctx2d.fillRect(barX, barY, barW * Math.max(0,boss.hp/boss.maxHp), 5);
+      ctx2d.font = "8px 'Press Start 2P'";
+      ctx2d.textAlign = 'center';
+      ctx2d.fillStyle = '#f4f1ea';
+      ctx2d.fillText(boss.name, bx, barY - 6);
+    }
+
+    // Boss projectiles
+    for(const p of bossProjectiles){
+      ctx2d.save();
+      ctx2d.fillStyle = p.color;
+      ctx2d.shadowColor = p.color; ctx2d.shadowBlur = 6;
+      ctx2d.beginPath(); ctx2d.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx2d.fill();
+      ctx2d.restore();
+    }
+
     if(flag){
-      ctx2d.fillStyle = '#9aa5b1';
+      const flagActive = !boss || boss.defeated;
+      ctx2d.fillStyle = flagActive ? '#9aa5b1' : '#5a5f78';
       ctx2d.fillRect(flag.x+4, flag.y, 4, flag.h);
-      ctx2d.fillStyle = won ? '#ffd23f' : '#ff5470';
+      ctx2d.fillStyle = !flagActive ? '#4a4e6b' : (won ? '#ffd23f' : '#ff5470');
       ctx2d.beginPath();
       ctx2d.moveTo(flag.x+8, flag.y+10);
       ctx2d.lineTo(flag.x+32, flag.y+18);

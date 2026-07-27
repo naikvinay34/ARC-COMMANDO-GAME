@@ -1,17 +1,15 @@
 # Arc Commando — a wallet-linked Arc Testnet platformer
 
-**Latest update:** fixed two real bugs that made levels effectively
-unclearable — the camera's forward-visibility didn't scale with
-screen size (very little warning before gaps/enemies on phones), and
-springs never actually launched the player (an execution-order bug).
-Also: the character is now the ArcMan mascot (animated procedurally —
-legs/shoes swing while running and tuck up mid-jump, plus a ground
-shadow that shrinks with jump height), coins are now a blue/white
-"$"-coin evocative of USDC instead of a plain gold ellipse, and
-there's a landscape/fullscreen button for mobile (⛶ icon in the HUD
-— note real orientation *lock* only works on Android Chrome-family
-browsers; iOS Safari doesn't expose that API, so there it just goes
-fullscreen).
+**Latest update:** added a boss fight at the end of every level — each
+one visually distinct (color/horns/eyes match its level's theme),
+with its own attack pattern, and gets tougher level over level
+(Meadow Brute → Sandstorm Djinn → Frost Titan → Shadow Wyrm). The
+flag won't activate until the boss is defeated. Also added a magnet
+power-up that pulls nearby $USDC coins toward you, replaced the HUD's
+generic "SCORE" with a `$USDC` counter showing coins collected, and
+put the ArcMan character image on the start screen under the title.
+Levels are ~20 tiles longer than before (the boss arena itself). See
+"Known simplifications" below for the honest limits of this pass.
 
 A browser-playable, original 2D platformer (own character "Commando",
 own art — not Nintendo's Mario) built for **Arc Testnet** (Circle's
@@ -194,6 +192,22 @@ desktop or mobile.
 
 (GitHub Pages also works if you'd rather: repo → Settings → Pages →
 Deploy from branch `main`, folder `/root`.)
+
+## Known simplifications (this pass)
+
+- **The boss doesn't physically block the path** — there's no wall,
+  so a player can technically walk past it toward the flag. The flag
+  just won't trigger completion until `boss.defeated` is true, so
+  they'll have to walk back and fight. Adding an actual barrier that
+  drops on boss defeat would be the next improvement here.
+- **Bosses are entirely canvas-drawn** (gradients, glowing eyes, horn
+  silhouettes that vary by pattern) — there's no boss artwork/sprite
+  like the ArcMan character image, since none was provided for them.
+- **"Longer levels"** was implemented as a dedicated ~20-tile boss
+  arena appended to the end of each existing level, rather than
+  hand-editing more content into the middle of every level — lower
+  risk of breaking already-tuned platforming, but the middle sections
+  themselves aren't longer than before.
 
 ## Notes
 
