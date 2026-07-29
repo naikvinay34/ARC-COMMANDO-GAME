@@ -1,17 +1,18 @@
 # Arc Commando — a wallet-linked Arc Testnet platformer
 
-**Latest update:** the character image is now embedded directly in
-`index.html` as base64 — no separate `assets/character-body.png` file
-to lose or break via a bad relative path, which is almost certainly
-why it wasn't loading before (the image file likely didn't travel
-with the HTML when it was moved/deployed, or a hosting path issue
-broke it). The start screen is now staged instead of showing every
-wallet option at once: it opens with just the bigger centered ArcMan
-image, the title, and a single "Connect Wallet to Play" button;
-tapping that reveals the actual wallet list. After the first entry
-fee is paid, a 2-slide story intro plays (ArcMan introduces himself,
-then sends you off to collect $USDC) before the level actually
-starts — it only shows once per session, not on every retry.
+**Latest update (major):**
+- **New character image** embedded (your navy-blue ArcMan), replacing the old one, plus a slightly bigger draw size and a soft contrast halo so it reads clearly against every level's background.
+- **Gun power-up fixed** — the pickup hitbox was too small, which is almost certainly what made it feel "inconsistent"; enlarged it and recolored it to a glowing green gun (matching HUD icon, held-gun sprite, and bullets).
+- **Weapon progression** — no need to re-collect the gun each level; it auto-upgrades with your progress: single shot → twin shots → 3-way spread → heavy missile (3x damage) on the final level.
+- **Jetpack added** — new pickup lets you hold jump in the air to hover/fly and shoot from above, with a fuel gauge that recharges on the ground. One placed before every boss arena.
+- **All 4 bosses redesigned** as genuinely distinct creatures instead of palette-swapped blobs: a muscular brute with a wrench and bandana, a tentacled sand kraken, a crystalline ice titan, and a final shadow dragon with a smoky aura — each still gets tougher and keeps its own attack pattern.
+- **Boss battle music** — a separate, more intense minor-key track with kick-drum punches kicks in the moment you're in boss range, and reverts to the normal tune once defeated (or if you back off).
+- **$USDC HUD highlighted** — now a glowing blue pill with its own coin-badge icon instead of plain text.
+- **Staged start screen** — opens with just the (now bigger) character image, title, and a single "Connect Wallet" button; the wallet list only appears once you tap it.
+- **Story intro** — after paying the first entry fee, ArcMan introduces himself over 2 slides before the level begins (shown once per session).
+- **"How to Play" screen** — a full rules/controls reference (keys, mobile buttons, every pickup, boss mechanics, wallet/gas info), opened from a button before Start.
+
+See "Known simplifications" below for the honest limits of this pass — there was a lot requested at once, so a few corners were consciously cut for reliability.
 
 A browser-playable, original 2D platformer (own character "Commando",
 own art — not Nintendo's Mario) built for **Arc Testnet** (Circle's
@@ -198,19 +199,11 @@ Deploy from branch `main`, folder `/root`.)
 
 ## Known simplifications (this pass)
 
-- **The boss doesn't physically block the path** — there's no wall,
-  so a player can technically walk past it toward the flag. The flag
-  just won't trigger completion until `boss.defeated` is true, so
-  they'll have to walk back and fight. Adding an actual barrier that
-  drops on boss defeat would be the next improvement here.
-- **Bosses are entirely canvas-drawn** (gradients, glowing eyes, horn
-  silhouettes that vary by pattern) — there's no boss artwork/sprite
-  like the ArcMan character image, since none was provided for them.
-- **"Longer levels"** was implemented as a dedicated ~20-tile boss
-  arena appended to the end of each existing level, rather than
-  hand-editing more content into the middle of every level — lower
-  risk of breaking already-tuned platforming, but the middle sections
-  themselves aren't longer than before.
+- **Bosses are canvas-drawn, not sprite art** — each now has a genuinely distinct silhouette (brute/kraken/titan/dragon) built from shapes and gradients, but they're not illustrated the way the ArcMan character is.
+- **The boss still doesn't physically block the path** — no wall, so a player can walk past it toward the flag; it just won't trigger completion until the boss is defeated, so they'll have to go back and fight. An actual barrier that drops on defeat would be the natural next step.
+- **Jetpack fuel/UI is minimal** — there's a backpack + flame visual and it works, but there's no dedicated fuel-gauge bar in the HUD yet (only the flame effect and the fact that it stops working when empty tells you).
+- **"$USDC" is still the coin-count**, not a separate combat/kill score — the highlighted HUD pill shows coins collected, same value as before, just styled.
+- **"Longer levels"** was implemented as a dedicated ~20-tile boss arena appended to the end of each existing level, rather than hand-editing more content into the middle of every level — lower risk of breaking already-tuned platforming, but the middle sections themselves aren't longer than before.
 
 ## Notes
 
