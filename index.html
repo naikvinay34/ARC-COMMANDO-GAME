@@ -234,7 +234,7 @@
       <div id="walletLanding">
         <h1 class="pixel-font">ARC COMMANDO</h1>
         <img id="startCharImg" alt="ArcMan" style="width:min(64%,220px); margin:6px auto 10px; display:block; filter:drop-shadow(0 8px 14px rgba(0,0,0,.45));" />
-        <h2 class="pixel-font">a wallet-linked Arc Testnet platformer</h2>
+        <h2 class="pixel-font">Guide the Commando through the mysteries of the Arc blockchain</h2>
         <button class="pixel-btn" id="showWalletChooserBtn" style="margin-top:10px;">🔌 CONNECT WALLET TO PLAY</button>
       </div>
 
@@ -245,6 +245,7 @@
         <div id="walletList" class="btn-row" style="flex-direction:column;"></div>
         <button class="pixel-btn ghost" id="connectWCBtn" style="margin-top:6px;">🔗 WalletConnect (any mobile wallet)</button>
         <div class="mint-status" id="walletStatus"></div>
+        <a href="https://faucet.circle.com" target="_blank" rel="noopener" style="display:block; font-size:9px; color:#9db4ff; text-align:center; margin-top:10px;">Need testnet USDC first? Get some from the faucet ↗</a>
         <button class="pixel-btn ghost" id="backToLandingBtn" style="margin-top:10px;">← Back</button>
       </div>
 
@@ -519,9 +520,9 @@
         } else if(ch === 'C'){
           coins.push({x:x+8,y:y+8,w:16,h:16,taken:false});
         } else if(ch === 'G'){
-          enemies.push({type:'glitch', x,y:y-TILE,vx:60,startX:x,range:96,alive:true,hp:1,w:28,h:28});
+          enemies.push({type:'glitch', x,y:y+4,vx:60,startX:x,range:96,alive:true,hp:1,w:28,h:28});
         } else if(ch === 'I'){
-          enemies.push({type:'insect', x,y:y-(TILE+8),vx:40,startX:x,range:70,alive:true,hp:3,w:42,h:38});
+          enemies.push({type:'insect', x,y:y-6,vx:40,startX:x,range:70,alive:true,hp:3,w:42,h:38});
         } else if(ch === 'U'){
           powerups.push({x:x+2,y:y+2,w:28,h:28,type:'gun',taken:false});
         } else if(ch === 'L'){
@@ -537,7 +538,7 @@
         } else if(ch === 'P'){
           playerSpawn = {x, y:y-TILE};
         } else if(ch === 'K'){
-          bossSpawnPoint = {x, y:y-TILE*2};
+          bossSpawnPoint = {x, y:y-TILE};
         } else if(ch === 'F'){
           flag = {x, y:y-TILE*5, w:12, h:TILE*5};
         }
@@ -713,7 +714,7 @@
   const sfx = {
     jump:   ()=> tone(520,0.12,'square',0.12),
     coin:   ()=> { tone(880,0.07,'square',0.12); tone(1320,0.08,'square',0.1,0.06); },
-    shoot:  ()=> tone(1200,0.05,'sawtooth',0.07),
+    shoot:  ()=> { noiseHat(0.2, 0); tone(85, 0.09, 'sine', 0.16); tone(1600, 0.02, 'square', 0.05); },
     stomp:  ()=> tone(180,0.12,'square',0.14),
     kill:   ()=> { tone(320,0.07,'square',0.13); tone(160,0.12,'square',0.1,0.06); },
     hurt:   ()=> tone(140,0.28,'sawtooth',0.18),
@@ -1047,24 +1048,34 @@
     // Frost Titan summons one minion at half health.
     if(boss.pattern === 'heavy' && !boss.spawnedMinion && boss.hp <= boss.maxHp/2){
       boss.spawnedMinion = true;
-      enemies.push({type:'glitch', x:boss.x-80, y:boss.y+20, vx:60, startX:boss.x-80, range:90, alive:true, hp:1, w:28, h:28});
+      enemies.push({type:'glitch', x:boss.x-80, y:boss.y+boss.h-28, vx:60, startX:boss.x-80, range:90, alive:true, hp:1, w:28, h:28});
     }
   }
 
   function fireBossAttack(){
-    const dir = player.x < boss.x ? -1 : 1;
     const originX = boss.x + boss.w/2, originY = boss.y + boss.h*0.4;
+    const targetX = player.x + player.w/2, targetY = player.y + player.h/2;
+    const baseAngle = Math.atan2(targetY - originY, targetX - originX);
+    const SPEED = 260;
+
+    function shot(angleOffset, speedMul, radius, life){
+      const ang = baseAngle + angleOffset;
+      bossProjectiles.push({
+        x: originX, y: originY,
+        vx: Math.cos(ang) * SPEED * speedMul,
+        vy: Math.sin(ang) * SPEED * speedMul,
+        r: radius, life: life, color: boss.accent
+      });
+    }
+
     if(boss.pattern === 'spread'){
-      for(const ang of [-0.25, 0, 0.25]){
-        bossProjectiles.push({ x:originX, y:originY, vx: dir*260*Math.cos(ang), vy: 260*Math.sin(ang), r:7, life:2.2, color:boss.accent });
-      }
+      shot(-0.28, 1, 7, 2.2); shot(0, 1, 7, 2.2); shot(0.28, 1, 7, 2.2);
     } else if(boss.pattern === 'heavy'){
-      bossProjectiles.push({ x:originX, y:originY, vx: dir*180, vy:0, r:13, life:2.6, color:boss.accent });
+      shot(0, 0.72, 13, 2.8);
     } else if(boss.pattern === 'combo'){
-      bossProjectiles.push({ x:originX, y:originY, vx: dir*300, vy:-40, r:8, life:2, color:boss.accent });
-      bossProjectiles.push({ x:originX, y:originY, vx: dir*300, vy:40, r:8, life:2, color:boss.accent });
-    } else { // charge — a low fast projectile as a secondary threat
-      bossProjectiles.push({ x:originX, y:originY, vx: dir*220, vy:0, r:9, life:1.8, color:boss.accent });
+      shot(-0.15, 1.15, 8, 2); shot(0.15, 1.15, 8, 2);
+    } else { // charge — a fast low shot aimed straight at the player
+      shot(0, 0.9, 9, 1.8);
     }
     sfx.shoot();
   }
@@ -1298,6 +1309,77 @@
     for(let i=0;i<4;i++) ctx2d.fillRect(6+i*5,-8,3,4);
   }
 
+  // -----------------------------------------------------------------
+  // ArcMan's in-game body — drawn entirely with shapes and gradients
+  // (not the flat photo, which is only used for the static start/story
+  // screens) so it reads as a shaded 3D toy rather than a pasted image:
+  // true cut-out A-frame hole (evenodd fill), a light-to-dark gradient
+  // for form, a glossy highlight streak, and a proper face.
+  // -----------------------------------------------------------------
+  function drawArcManBody(bodyW, bodyH, bodyTopY, flash){
+    const W = bodyW/2, H = bodyH;
+    const c = flash ? '#ffffff' : '#254a8a';
+    ctx2d.save();
+    ctx2d.translate(0, bodyTopY);
+
+    ctx2d.save();
+    ctx2d.translate(2,3);
+    ctx2d.fillStyle = 'rgba(0,0,0,.18)';
+    ctx2d.beginPath();
+    ctx2d.moveTo(-W*0.46, H); ctx2d.lineTo(-W*0.15,H*0.06);
+    ctx2d.quadraticCurveTo(0,-H*0.05,W*0.15,H*0.06);
+    ctx2d.lineTo(W*0.46,H); ctx2d.closePath(); ctx2d.fill();
+    ctx2d.restore();
+
+    const grad = ctx2d.createLinearGradient(-W*0.4,-H*0.05,W*0.35,H);
+    grad.addColorStop(0, lighten(c,55));
+    grad.addColorStop(0.45, c);
+    grad.addColorStop(1, darken(c,25));
+    ctx2d.fillStyle = grad;
+    ctx2d.beginPath();
+    ctx2d.moveTo(-W*0.46, H);
+    ctx2d.lineTo(-W*0.15, H*0.06);
+    ctx2d.quadraticCurveTo(0,-H*0.05,W*0.15,H*0.06);
+    ctx2d.lineTo(W*0.46, H);
+    ctx2d.closePath();
+    ctx2d.moveTo(0, H*0.20);
+    ctx2d.lineTo(-W*0.22, H*0.60);
+    ctx2d.lineTo(W*0.22, H*0.60);
+    ctx2d.closePath();
+    ctx2d.fill('evenodd');
+
+    ctx2d.strokeStyle = darken(c,45); ctx2d.lineWidth = 2;
+    ctx2d.beginPath();
+    ctx2d.moveTo(-W*0.46, H); ctx2d.lineTo(-W*0.15, H*0.06);
+    ctx2d.quadraticCurveTo(0,-H*0.05,W*0.15,H*0.06); ctx2d.lineTo(W*0.46, H);
+    ctx2d.stroke();
+    ctx2d.beginPath();
+    ctx2d.moveTo(0, H*0.20); ctx2d.lineTo(-W*0.22, H*0.60); ctx2d.lineTo(W*0.22, H*0.60); ctx2d.closePath();
+    ctx2d.stroke();
+
+    ctx2d.fillStyle = 'rgba(255,255,255,.35)';
+    ctx2d.beginPath();
+    ctx2d.ellipse(-W*0.2, H*0.15, W*0.12, H*0.18, -0.4, 0, Math.PI*2);
+    ctx2d.fill();
+
+    const faceY = H*0.62 + (H - H*0.62)*0.42;
+    ctx2d.strokeStyle = '#12203f'; ctx2d.lineWidth = 2; ctx2d.lineCap='round';
+    ctx2d.beginPath(); ctx2d.moveTo(-W*0.24, faceY-9); ctx2d.lineTo(-W*0.08, faceY-11); ctx2d.stroke();
+    ctx2d.beginPath(); ctx2d.moveTo(W*0.08, faceY-11); ctx2d.lineTo(W*0.24, faceY-9); ctx2d.stroke();
+    for(const ex of [-W*0.16, W*0.16]){
+      ctx2d.fillStyle = '#0d0f22';
+      ctx2d.beginPath(); ctx2d.ellipse(ex, faceY, 4.2, 5.4, 0,0,Math.PI*2); ctx2d.fill();
+      ctx2d.fillStyle = '#fff';
+      ctx2d.beginPath(); ctx2d.ellipse(ex-1.4, faceY-1.6, 1.3, 1.6, 0,0,Math.PI*2); ctx2d.fill();
+    }
+    ctx2d.fillStyle = '#0d0f22';
+    ctx2d.beginPath(); ctx2d.ellipse(0, faceY+11, 6, 4, 0, 0, Math.PI); ctx2d.fill();
+    ctx2d.fillStyle = '#e8536b';
+    ctx2d.beginPath(); ctx2d.ellipse(0, faceY+12, 3, 1.8, 0,0,Math.PI*2); ctx2d.fill();
+
+    ctx2d.restore();
+  }
+
   function render(){
     const theme = LEVELS[currentLevel] ? LEVELS[currentLevel].theme : LEVELS[0].theme;
     ctx2d.clearRect(0,0,viewW,viewH);
@@ -1396,13 +1478,35 @@
       ctx2d.save();
       ctx2d.translate(pu.x+12, pu.y+12+Math.sin(elapsed*4)*5);
       if(pu.type === 'gun'){
-        ctx2d.shadowColor = '#4dff7a'; ctx2d.shadowBlur = 10;
-        ctx2d.fillStyle = '#4dff7a';
-        ctx2d.beginPath(); ctx2d.moveTo(-11,4); ctx2d.lineTo(11,4); ctx2d.lineTo(7,-7); ctx2d.lineTo(-11,-7); ctx2d.fill();
-        ctx2d.shadowBlur = 0;
-        ctx2d.fillStyle = '#0d0f22'; ctx2d.fillRect(-2,-11,4,7);
-        ctx2d.strokeStyle = '#1b7a3a'; ctx2d.lineWidth = 1.5;
-        ctx2d.strokeRect(-11,-7,22,11);
+        // pickup glow ring behind the gun shape
+        ctx2d.strokeStyle = 'rgba(77,255,122,.55)'; ctx2d.lineWidth = 2;
+        ctx2d.beginPath(); ctx2d.arc(0,0,15,0,Math.PI*2); ctx2d.stroke();
+
+        ctx2d.save();
+        ctx2d.rotate(-0.12);
+        // barrel
+        const bgrad = ctx2d.createLinearGradient(0,-3,0,3);
+        bgrad.addColorStop(0, '#7a8494'); bgrad.addColorStop(1, '#2b2f38');
+        ctx2d.fillStyle = bgrad;
+        ctx2d.fillRect(-2, -9, 15, 4);
+        // slide/body
+        ctx2d.fillStyle = bgrad;
+        ctx2d.beginPath();
+        if(ctx2d.roundRect) ctx2d.roundRect(-9,-8,14,7,1.5); else ctx2d.rect(-9,-8,14,7);
+        ctx2d.fill();
+        // grip (angled down-back)
+        ctx2d.save();
+        ctx2d.translate(-7,-2); ctx2d.rotate(0.45);
+        ctx2d.fillStyle = '#1b1f2a';
+        ctx2d.fillRect(-3,0,6,11);
+        ctx2d.restore();
+        // trigger guard
+        ctx2d.strokeStyle = '#1b1f2a'; ctx2d.lineWidth = 1.6;
+        ctx2d.beginPath(); ctx2d.arc(-2,1,3,0,Math.PI*1.3); ctx2d.stroke();
+        // highlight stripe for a metallic look
+        ctx2d.strokeStyle = 'rgba(255,255,255,.5)'; ctx2d.lineWidth = 1;
+        ctx2d.beginPath(); ctx2d.moveTo(-7,-7); ctx2d.lineTo(4,-7); ctx2d.stroke();
+        ctx2d.restore();
       } else if(pu.type === 'jetpack'){
         ctx2d.shadowColor = '#ff9b3d'; ctx2d.shadowBlur = 10;
         ctx2d.fillStyle = '#5c5f78';
@@ -1465,15 +1569,27 @@
 
     for(const b of bullets){
       ctx2d.save();
+      const ang = Math.atan2(b.vy||0, b.vx);
+      ctx2d.translate(b.x, b.y);
+      ctx2d.rotate(ang);
       if(b.big){
-        ctx2d.shadowColor = '#ff9b3d'; ctx2d.shadowBlur = 10;
-        ctx2d.fillStyle = '#ff9b3d';
-        ctx2d.beginPath(); ctx2d.ellipse(b.x,b.y,12,6,0,0,Math.PI*2); ctx2d.fill();
-        ctx2d.fillStyle = '#ffe0a8';
-        ctx2d.beginPath(); ctx2d.ellipse(b.x - Math.sign(b.vx||1)*4, b.y, 4, 3, 0,0,Math.PI*2); ctx2d.fill();
+        // missile — nose cone, body, tail fins, translucent exhaust trail
+        ctx2d.fillStyle = 'rgba(255,155,61,.32)';
+        ctx2d.beginPath(); ctx2d.moveTo(-10,0); ctx2d.lineTo(-24,-4); ctx2d.lineTo(-24,4); ctx2d.fill();
+        ctx2d.fillStyle = '#c94f1f';
+        ctx2d.fillRect(-10,-4,14,8);
+        ctx2d.fillStyle = '#e8752f';
+        ctx2d.beginPath(); ctx2d.moveTo(4,-4); ctx2d.lineTo(13,0); ctx2d.lineTo(4,4); ctx2d.fill();
+        ctx2d.fillStyle = '#4a4e5e';
+        ctx2d.fillRect(-10,-6,4,3); ctx2d.fillRect(-10,3,4,3);
       } else {
-        ctx2d.fillStyle = '#4dff7a';
-        ctx2d.beginPath(); ctx2d.ellipse(b.x,b.y,6,3,0,0,Math.PI*2); ctx2d.fill();
+        // real bullet — brass tip with a faint motion streak behind it
+        ctx2d.strokeStyle = 'rgba(255,224,168,.4)'; ctx2d.lineWidth = 2;
+        ctx2d.beginPath(); ctx2d.moveTo(-13,0); ctx2d.lineTo(-4,0); ctx2d.stroke();
+        ctx2d.fillStyle = '#c9a02a';
+        ctx2d.fillRect(-6,-2,6,4);
+        ctx2d.fillStyle = '#f0d878';
+        ctx2d.beginPath(); ctx2d.moveTo(0,-2); ctx2d.lineTo(6,0); ctx2d.lineTo(0,2); ctx2d.fill();
       }
       ctx2d.restore();
     }
@@ -1582,8 +1698,8 @@
       }
 
       // Legs (drawn first, so the body slightly overlaps their tops)
-      ctx2d.fillStyle = '#141414';
-      ctx2d.strokeStyle = '#000000'; ctx2d.lineWidth = 1;
+      ctx2d.fillStyle = '#1b2f57';
+      ctx2d.strokeStyle = '#0d1830'; ctx2d.lineWidth = 1;
       for(const [swing, lift] of [[swing1,lift1],[swing2,lift2]]){
         const lx = swing - legW/2 - (swing<0?2:-2);
         const ly = footY - legH - lift;
@@ -1602,23 +1718,20 @@
         ctx2d.fill(); ctx2d.stroke();
       }
 
-      // Body/head/arms — the real mascot artwork
-      if(charImgLoaded){
-        ctx2d.save();
-        ctx2d.shadowColor = 'rgba(255,255,255,.85)';
-        ctx2d.shadowBlur = 6;
-        ctx2d.drawImage(charImg, -bodyW/2, bodyTopY, bodyW, bodyH);
-        ctx2d.restore();
-      } else {
-        ctx2d.fillStyle = '#f4f1ea';
-        ctx2d.beginPath();
-        if(ctx2d.roundRect) ctx2d.roundRect(-bodyW/2, bodyTopY, bodyW, bodyH, 6); else ctx2d.rect(-bodyW/2, bodyTopY, bodyW, bodyH);
-        ctx2d.fill();
-      }
+      // Body/head/arms — fully procedural (shapes + gradients), not
+      // the static photo — reads as a shaded 3D toy, not a flat sprite.
+      drawArcManBody(bodyW, bodyH, bodyTopY, false);
 
       if(player.hasGun){
-        ctx2d.fillStyle = '#4dff7a';
-        ctx2d.fillRect(bodyW/2-4, bodyTopY+bodyH*0.45, 12, 5);
+        const gy = bodyTopY+bodyH*0.45;
+        ctx2d.fillStyle = '#3a3f4a';
+        ctx2d.fillRect(bodyW/2-2, gy-1.5, 13, 3.5);
+        ctx2d.fillStyle = '#2b2f38';
+        ctx2d.fillRect(bodyW/2-4, gy-3, 8, 5.5);
+        ctx2d.fillStyle = '#1b1f2a';
+        ctx2d.save(); ctx2d.translate(bodyW/2-2, gy+2); ctx2d.rotate(0.5);
+        ctx2d.fillRect(-2,0,4,7);
+        ctx2d.restore();
       }
 
       if(player.hasJetpack){

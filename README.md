@@ -1,6 +1,14 @@
 # Arc Commando — a wallet-linked Arc Testnet platformer
 
-**Latest update (major):**
+**Latest update (bug fixes + character redesign):**
+- **Character is now fully procedural** — no more pasted flat image during gameplay. It's built from shapes and gradients (true cut-out A-frame hole, light-to-dark shading, a glossy highlight, a proper face) for a shaded 3D-toy look instead of a flat sprite. The original photo is still used for the static start/story screens, where a real photo is fine.
+- **Fixed enemies and the boss floating above the ground** — they had no gravity to self-correct (unlike the player), and were using a spawn-offset formula meant for gravity-corrected entities, so they hovered noticeably above the actual ground surface. Recalculated exact grounded positions for glitches, insects, and the boss.
+- **Fixed the boss "can't aim"** — attacks now compute the real angle to the player's current position when fired, instead of always shooting flat/horizontal regardless of where the player is (which, combined with the floating bug above, meant shots often sailed clean over a grounded player).
+- **Gun pickup and held weapon redesigned** as an actual pistol silhouette (barrel, slide, grip, trigger guard) instead of a green rectangle.
+- **Bullets redesigned** to look like real brass-tipped bullets with a motion streak (missiles now look like proper finned rockets with an exhaust trail), and the shoot sound is now a noise-based gunshot crack + low punch instead of a synth blip.
+- **Faucet link now shown before connecting too**, not just after.
+- **Start screen tagline changed** to "Guide the Commando through the mysteries of the Arc blockchain."
+
 - **New character image** embedded (your navy-blue ArcMan), replacing the old one, plus a slightly bigger draw size and a soft contrast halo so it reads clearly against every level's background.
 - **Gun power-up fixed** — the pickup hitbox was too small, which is almost certainly what made it feel "inconsistent"; enlarged it and recolored it to a glowing green gun (matching HUD icon, held-gun sprite, and bullets).
 - **Weapon progression** — no need to re-collect the gun each level; it auto-upgrades with your progress: single shot → twin shots → 3-way spread → heavy missile (3x damage) on the final level.
@@ -198,6 +206,8 @@ desktop or mobile.
 Deploy from branch `main`, folder `/root`.)
 
 ## Known simplifications (this pass)
+
+- **Level layouts weren't redesigned for more Bounce-Tales-style variety yet** — that was explicitly requested (different terrain shapes/paths per level, more verticality) but I deferred it rather than risk hand-editing the ASCII maps again in the same pass I'd just fixed jump-reachability and gap-width bugs in — a real risk given how easy those are to break. This is the top candidate for a focused follow-up.
 
 - **Bosses are canvas-drawn, not sprite art** — each now has a genuinely distinct silhouette (brute/kraken/titan/dragon) built from shapes and gradients, but they're not illustrated the way the ArcMan character is.
 - **The boss still doesn't physically block the path** — no wall, so a player can walk past it toward the flag; it just won't trigger completion until the boss is defeated, so they'll have to go back and fight. An actual barrier that drops on defeat would be the natural next step.
