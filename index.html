@@ -1380,6 +1380,82 @@
     ctx2d.restore();
   }
 
+  function drawCommandoBody(bodyW, bodyH, bodyTopY, flash){
+    const W = bodyW/2, H = bodyH;
+    const skin = flash ? '#ffffff' : '#c98a5b';
+    const vest = flash ? '#ffffff' : '#4a5a3a';
+    ctx2d.save();
+    ctx2d.translate(0, bodyTopY);
+
+    const headR = W*0.5;
+    const headCY = headR*0.95;
+    const torsoTop = headCY + headR*0.85;
+    const torsoBottom = H;
+    const torsoW = W*1.05;
+
+    // torso (tank top) — tapered, gradient-shaded for form
+    const tgrad = ctx2d.createLinearGradient(-torsoW,torsoTop,torsoW,torsoBottom);
+    tgrad.addColorStop(0, lighten(vest,25)); tgrad.addColorStop(1, darken(vest,15));
+    ctx2d.fillStyle = tgrad;
+    ctx2d.beginPath();
+    ctx2d.moveTo(-torsoW, torsoTop);
+    ctx2d.lineTo(torsoW, torsoTop);
+    ctx2d.lineTo(torsoW*0.8, torsoBottom);
+    ctx2d.lineTo(-torsoW*0.8, torsoBottom);
+    ctx2d.closePath();
+    ctx2d.fill();
+    ctx2d.strokeStyle = darken(vest,35); ctx2d.lineWidth = 1.4; ctx2d.stroke();
+
+    // muscle/vest lines
+    ctx2d.strokeStyle = darken(vest,25); ctx2d.lineWidth = 1;
+    ctx2d.beginPath(); ctx2d.moveTo(0,torsoTop+2); ctx2d.lineTo(0,torsoBottom-2); ctx2d.stroke();
+    ctx2d.beginPath(); ctx2d.moveTo(-torsoW*0.6,torsoTop+(torsoBottom-torsoTop)*0.4); ctx2d.lineTo(torsoW*0.6,torsoTop+(torsoBottom-torsoTop)*0.4); ctx2d.stroke();
+
+    // ammo strap across the chest
+    ctx2d.strokeStyle = '#2b2418'; ctx2d.lineWidth = 2.2;
+    ctx2d.beginPath(); ctx2d.moveTo(-torsoW*0.9, torsoTop); ctx2d.lineTo(torsoW*0.5, torsoBottom); ctx2d.stroke();
+
+    // bare arms
+    ctx2d.fillStyle = skin;
+    const armY = torsoTop + (torsoBottom-torsoTop)*0.35;
+    ctx2d.beginPath(); ctx2d.ellipse(-torsoW-3, armY, 4.2, 8, 0.25,0,Math.PI*2); ctx2d.fill();
+    ctx2d.beginPath(); ctx2d.ellipse(torsoW+3, armY, 4.2, 8, -0.25,0,Math.PI*2); ctx2d.fill();
+
+    // head
+    const hgrad = ctx2d.createRadialGradient(-headR*0.3,headCY-headR*0.3,1,0,headCY,headR*1.3);
+    hgrad.addColorStop(0, lighten(skin,20)); hgrad.addColorStop(1, darken(skin,15));
+    ctx2d.fillStyle = hgrad;
+    ctx2d.beginPath(); ctx2d.ellipse(0, headCY, headR, headR*0.92, 0,0,Math.PI*2); ctx2d.fill();
+
+    // bandana + trailing knot
+    ctx2d.fillStyle = '#c0392b';
+    ctx2d.beginPath();
+    ctx2d.moveTo(-headR, headCY-headR*0.15);
+    ctx2d.lineTo(headR, headCY-headR*0.15);
+    ctx2d.lineTo(headR*0.9, headCY-headR*0.55);
+    ctx2d.lineTo(-headR*0.9, headCY-headR*0.55);
+    ctx2d.fill();
+    ctx2d.beginPath();
+    ctx2d.moveTo(headR*0.85, headCY-headR*0.3);
+    ctx2d.lineTo(headR*1.55, headCY-headR*0.05);
+    ctx2d.lineTo(headR*1.3, headCY+headR*0.15);
+    ctx2d.fill();
+
+    // eyebrows + eyes
+    ctx2d.strokeStyle='#1b1f22'; ctx2d.lineWidth=1.4;
+    ctx2d.beginPath(); ctx2d.moveTo(-headR*0.5,headCY-headR*0.02); ctx2d.lineTo(-headR*0.12,headCY-headR*0.1); ctx2d.stroke();
+    ctx2d.beginPath(); ctx2d.moveTo(headR*0.12,headCY-headR*0.1); ctx2d.lineTo(headR*0.5,headCY-headR*0.02); ctx2d.stroke();
+    ctx2d.fillStyle='#1b1f22';
+    ctx2d.beginPath(); ctx2d.arc(-headR*0.28,headCY+headR*0.1,1.6,0,Math.PI*2); ctx2d.fill();
+    ctx2d.beginPath(); ctx2d.arc(headR*0.28,headCY+headR*0.1,1.6,0,Math.PI*2); ctx2d.fill();
+
+    // firm mouth
+    ctx2d.strokeStyle = darken(skin,35); ctx2d.lineWidth = 1.4;
+    ctx2d.beginPath(); ctx2d.moveTo(-headR*0.3,headCY+headR*0.55); ctx2d.lineTo(headR*0.3,headCY+headR*0.55); ctx2d.stroke();
+
+    ctx2d.restore();
+  }
+
   function render(){
     const theme = LEVELS[currentLevel] ? LEVELS[currentLevel].theme : LEVELS[0].theme;
     ctx2d.clearRect(0,0,viewW,viewH);
@@ -1555,7 +1631,7 @@
           ctx2d.fillRect(-15+i*8,-26,5,4);
         }
       } else {
-        ctx2d.translate(en.x+14, en.y+28);
+        ctx2d.translate(en.x+14, en.y+14);
         ctx2d.scale(1, squish);
         ctx2d.fillStyle = '#7c3aed';
         ctx2d.beginPath(); ctx2d.ellipse(0,0,14,14,0,0,Math.PI*2); ctx2d.fill();
@@ -1698,8 +1774,8 @@
       }
 
       // Legs (drawn first, so the body slightly overlaps their tops)
-      ctx2d.fillStyle = '#1b2f57';
-      ctx2d.strokeStyle = '#0d1830'; ctx2d.lineWidth = 1;
+      ctx2d.fillStyle = '#4a5a3a';
+      ctx2d.strokeStyle = '#2c3624'; ctx2d.lineWidth = 1;
       for(const [swing, lift] of [[swing1,lift1],[swing2,lift2]]){
         const lx = swing - legW/2 - (swing<0?2:-2);
         const ly = footY - legH - lift;
@@ -1707,9 +1783,9 @@
         if(ctx2d.roundRect) ctx2d.roundRect(lx, ly, legW, legH, 3); else ctx2d.rect(lx, ly, legW, legH);
         ctx2d.fill();
       }
-      // Shoes
-      ctx2d.fillStyle = '#f4f1ea';
-      ctx2d.strokeStyle = '#c9c6bd'; ctx2d.lineWidth = 1;
+      // Boots
+      ctx2d.fillStyle = '#3a2a1c';
+      ctx2d.strokeStyle = '#1f150d'; ctx2d.lineWidth = 1;
       for(const [swing, lift] of [[swing1,lift1],[swing2,lift2]]){
         const lx = swing - legW/2 - (swing<0?2:-2);
         const sy = footY - lift;
@@ -1720,7 +1796,7 @@
 
       // Body/head/arms — fully procedural (shapes + gradients), not
       // the static photo — reads as a shaded 3D toy, not a flat sprite.
-      drawArcManBody(bodyW, bodyH, bodyTopY, false);
+      drawCommandoBody(bodyW, bodyH, bodyTopY, false);
 
       if(player.hasGun){
         const gy = bodyTopY+bodyH*0.45;
